@@ -17,7 +17,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   font-family: "Inter", sans-serif;
@@ -25,6 +26,7 @@ html, body {
     radial-gradient(circle at top left, rgba(59,130,246,0.08), transparent 28%),
     linear-gradient(180deg, #f8fbff 0%, #eef3f9 100%);
   color: var(--text);
+  min-height: 100%;
 }
 
 body {
@@ -33,10 +35,11 @@ body {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: 24px;
   padding: 24px;
   min-height: 100vh;
+  align-items: start;
 }
 
 .sidebar {
@@ -46,6 +49,10 @@ body {
   box-shadow: var(--shadow);
   padding: 20px;
   backdrop-filter: blur(10px);
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
 }
 
 .brand-card {
@@ -69,6 +76,7 @@ body {
   color: white;
   font-weight: 800;
   letter-spacing: 0.02em;
+  flex-shrink: 0;
 }
 
 .brand-card h1 {
@@ -105,6 +113,7 @@ body {
 .field.inline {
   flex-direction: row;
   align-items: center;
+  gap: 10px;
 }
 
 .field span {
@@ -133,12 +142,14 @@ input[type="file"] {
 }
 
 input[type="text"]:focus,
-select:focus {
+select:focus,
+input[type="file"]:focus {
   border-color: rgba(29, 78, 216, 0.45);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
 }
 
-.button-row {
+.button-row,
+.top-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
@@ -219,6 +230,7 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  min-width: 0;
 }
 
 .workspace-topbar {
@@ -244,30 +256,33 @@ select:focus {
   color: var(--muted);
 }
 
-.top-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 .canvas-wrapper {
   background: rgba(255, 255, 255, 0.75);
   border: 1px solid var(--panel-border);
   box-shadow: var(--shadow);
   border-radius: var(--radius-lg);
   padding: 18px;
-  min-height: 760px;
+  min-height: clamp(420px, 70vh, 900px);
   backdrop-filter: blur(8px);
+  overflow: auto;
 }
 
 #stageContainer {
   width: 100%;
-  min-height: 720px;
+  min-height: clamp(380px, 68vh, 860px);
   border-radius: 20px;
-  overflow: hidden;
+  overflow: auto;
   background:
     linear-gradient(180deg, rgba(248,250,252,0.96), rgba(241,245,249,0.96));
   border: 1px solid rgba(15, 23, 42, 0.06);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+#stageContainer canvas {
+  display: block;
+  max-width: none;
 }
 
 @media (max-width: 1120px) {
@@ -275,8 +290,35 @@ select:focus {
     grid-template-columns: 1fr;
   }
 
+  .sidebar {
+    position: static;
+    max-height: none;
+  }
+
   .workspace-topbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .sidebar,
+  .workspace-topbar,
+  .canvas-wrapper {
+    border-radius: 18px;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .button-row,
+  .top-actions {
+    flex-direction: column;
   }
 }
