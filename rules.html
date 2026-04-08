@@ -12,20 +12,17 @@
       <div>
         <h1>Éditeur de règles</h1>
         <p>Crée tes règles, organise tes sections, et ajoute une logique simple en blocs.</p>
-        <button id="exportPdfBtn" class="btn btn-secondary">Exporter PDF</button>
       </div>
 
       <div class="topbar-actions">
         <button id="exportBtn" class="btn btn-primary">Exporter les règles</button>
+        <button id="exportPdfBtn" class="btn btn-secondary">Exporter PDF</button>
+        <button id="toggleWriterBtn" class="btn btn-secondary" aria-expanded="false">Ouvrir l’éditeur de notes</button>
         <button id="resetBtn" class="btn btn-secondary">Réinitialiser</button>
-        <button id="exportJsonBtn" class="btn btn-secondary">Exporter JSON</button>
-<button id="importJsonBtn" class="btn btn-secondary">Importer JSON</button>
-<input type="file" id="importJsonFile" hidden />
       </div>
     </header>
 
     <main class="layout">
-      <!-- COLONNE GAUCHE -->
       <section class="panel">
         <div class="panel-header">
           <h2>Règles du jeu</h2>
@@ -71,7 +68,6 @@
         </div>
       </section>
 
-      <!-- COLONNE DROITE -->
       <section class="panel">
         <div class="panel-header">
           <h2>Logique simple</h2>
@@ -99,16 +95,44 @@
       </div>
       <textarea id="exportOutput" rows="18" readonly placeholder="L’export apparaîtra ici..."></textarea>
     </section>
+
+    <section id="writerPanel" class="panel writer-panel" hidden>
+      <div class="panel-header">
+        <h2>Notes de rédaction</h2>
+        <div class="writer-actions">
+          <button type="button" class="btn btn-secondary mini-tool" data-cmd="bold">Gras</button>
+          <button type="button" class="btn btn-secondary mini-tool" data-cmd="italic">Italique</button>
+          <button type="button" class="btn btn-secondary mini-tool" data-cmd="underline">Souligner</button>
+          <button type="button" class="btn btn-secondary mini-tool" data-cmd="insertUnorderedList">Liste</button>
+          <button type="button" class="btn btn-secondary mini-tool" data-cmd="insertOrderedList">1. 2. 3.</button>
+          <button type="button" class="btn btn-secondary mini-tool" data-cmd="justifyLeft">Gauche</button>
+          <button type="button" class="btn btn-secondary mini-tool" data-cmd="justifyCenter">Centre</button>
+          <button type="button" class="btn btn-secondary mini-tool" data-cmd="justifyRight">Droite</button>
+          <button type="button" class="btn btn-secondary mini-tool" data-block="h2">Titre</button>
+          <button type="button" class="btn btn-secondary mini-tool" data-block="p">Paragraphe</button>
+          <button type="button" class="btn btn-secondary mini-tool" id="undoWriterBtn">Annuler</button>
+          <button type="button" class="btn btn-secondary mini-tool" id="redoWriterBtn">Rétablir</button>
+          <button type="button" class="btn btn-secondary mini-tool" id="clearWriterBtn">Effacer style</button>
+        </div>
+      </div>
+
+      <div id="writerEditor" class="writer-editor" contenteditable="true" spellcheck="true">
+        <h2>Notes</h2>
+        <p>Écris ici des notes, variantes, exemples ou scénarios de jeu.</p>
+      </div>
+    </section>
   </div>
+
+  <section id="pdfRenderArea" class="pdf-render-area" aria-hidden="true"></section>
 
   <template id="ruleBlockTemplate">
     <article class="rule-block">
       <div class="rule-block-top">
         <span class="rule-badge">Règle</span>
         <div class="rule-actions">
-          <button class="icon-btn move-up" title="Monter">↑</button>
-          <button class="icon-btn move-down" title="Descendre">↓</button>
-          <button class="icon-btn delete-rule" title="Supprimer">✕</button>
+          <button type="button" class="icon-btn move-up" title="Monter">↑</button>
+          <button type="button" class="icon-btn move-down" title="Descendre">↓</button>
+          <button type="button" class="icon-btn delete-rule" title="Supprimer">✕</button>
         </div>
       </div>
 
@@ -143,9 +167,9 @@
       <div class="logic-block-top">
         <span class="logic-type-badge">Bloc</span>
         <div class="rule-actions">
-          <button class="icon-btn move-up" title="Monter">↑</button>
-          <button class="icon-btn move-down" title="Descendre">↓</button>
-          <button class="icon-btn delete-logic" title="Supprimer">✕</button>
+          <button type="button" class="icon-btn move-up" title="Monter">↑</button>
+          <button type="button" class="icon-btn move-down" title="Descendre">↓</button>
+          <button type="button" class="icon-btn delete-logic" title="Supprimer">✕</button>
         </div>
       </div>
 
@@ -160,8 +184,8 @@
       </div>
     </article>
   </template>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="rules.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="rules.js"></script>
 </body>
 </html>
