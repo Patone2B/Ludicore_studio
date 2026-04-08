@@ -3,25 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Éditeur de plateau</title>
+  <title>Éditeur de carte 2D</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="map.css" />
+  <link rel="stylesheet" href="map-2-corrige.css" />
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand-card">
-        <div class="brand-badge">BP</div>
+        <div class="brand-badge">2D</div>
         <div>
-          <h1>Board Planner</h1>
-          <p>Éditeur de plateau professionnel</p>
-          <button class="acceuil" type="button">acceuil</button>
-<a href="index.html">accueil </a>
-      </section>
+          <h1>Éditeur de carte 2D</h1>
+          <p>Importez un tileset, découpez-le, puis placez vos arbres, sols, rochers et eau sur plusieurs calques.</p>
         </div>
       </div>
+
+      <section class="panel">
+        <h2>Projet</h2>
+        <div class="button-row">
+          <a class="btn btn-ghost btn-link" href="index.html">Accueil</a>
+          <button class="btn" id="resetViewBtn" type="button">Recentrer la vue</button>
+        </div>
+      </section>
 
       <section class="panel">
         <h2>Grille</h2>
@@ -30,124 +35,184 @@
           <span>Type</span>
           <select id="gridType">
             <option value="square">Carrée</option>
-            <option value="hex">Hexagonale</option>
             <option value="free">Libre</option>
           </select>
         </label>
 
         <label class="field">
-          <span>Taille</span>
-          <input id="gridSize" type="range" min="20" max="120" value="50" />
+          <span>Taille de case <strong id="gridSizeValue">32 px</strong></span>
+          <input id="gridSize" type="range" min="16" max="128" step="1" value="32" />
         </label>
 
         <label class="field inline">
           <input id="showGrid" type="checkbox" checked />
           <span>Afficher la grille</span>
         </label>
- 
-        <button class="btn btn-primary" id="applyGridBtn">Appliquer la grille</button>
+
+        <label class="field inline">
+          <input id="snapToGrid" type="checkbox" checked />
+          <span>Aimanter à la grille</span>
+        </label>
+
+        <div class="button-row">
+          <button class="btn btn-primary" id="applyGridBtn" type="button">Appliquer</button>
+        </div>
       </section>
 
       <section class="panel">
-        <h2>Fond</h2>
+        <h2>Fond de carte</h2>
 
         <label class="field">
           <span>Image locale</span>
           <input id="bgUpload" type="file" accept="image/*" />
         </label>
 
-        <label class="field">
-          <span>Ou URL d’image</span>
-          <input id="bgUrl" type="text" placeholder="https://..." />
-        </label>
-
         <div class="button-row">
-          <button class="btn" id="loadBgUrlBtn">Charger l’URL</button>
-          <button class="btn btn-ghost" id="clearBgBtn">Retirer le fond</button>
+          <button class="btn btn-ghost" id="clearBgBtn" type="button">Retirer le fond</button>
         </div>
       </section>
 
-      <section>
-
       <section class="panel">
-        <h2>Zone intelligente</h2>
+        <h2>Tileset / Découpage</h2>
 
         <label class="field">
-          <span>Nom de la zone</span>
-          <input id="zoneName" type="text" placeholder="Ex : Zone de combat" />
+          <span>Importer une planche d’assets</span>
+          <input id="tilesetUpload" type="file" accept="image/*" />
         </label>
 
-        <label class="field">
-          <span>Type</span>
-          <select id="zoneType">
-            <option value="combat">Combat</option>
-            <option value="draw">Pioche</option>
-            <option value="objective">Objectif</option>
-            <option value="spawn">Apparition</option>
-            <option value="danger">Danger</option>
-            <option value="custom">Personnalisée</option>
-          </select>
-        </label>
+        <div class="grid-2">
+          <label class="field">
+            <span>Largeur tuile</span>
+            <input id="tileWidth" type="number" min="8" step="1" value="32" />
+          </label>
+
+          <label class="field">
+            <span>Hauteur tuile</span>
+            <input id="tileHeight" type="number" min="8" step="1" value="32" />
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label class="field">
+            <span>Marge</span>
+            <input id="tileMargin" type="number" min="0" step="1" value="0" />
+          </label>
+
+          <label class="field">
+            <span>Espacement</span>
+            <input id="tileSpacing" type="number" min="0" step="1" value="0" />
+          </label>
+        </div>
 
         <div class="button-row">
-          <button class="btn btn-primary" id="addRectZoneBtn">Ajouter zone rectangulaire</button>
-          <button class="btn" id="addCircleZoneBtn">Ajouter zone ronde</button>
+          <button class="btn btn-primary" id="sliceTilesetBtn" type="button">Découper le tileset</button>
+          <button class="btn btn-ghost" id="clearTilesetBtn" type="button">Vider</button>
+        </div>
+
+        <p class="helper-text">Cliquez sur une tuile découpée, puis cliquez sur la carte pour la poser. Même principe qu’un éditeur type Tiled, mais en plus simple.</p>
+
+        <div class="tileset-preview-wrap">
+          <div id="tilesetInfo" class="tileset-info">Aucun tileset chargé.</div>
+          <div id="tilesPalette" class="tiles-palette"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Outil actif</h2>
+
+        <div class="tool-row">
+          <button class="btn btn-primary tool-btn is-active" id="toolSelectBtn" type="button" data-tool="select">Sélection</button>
+          <button class="btn tool-btn" id="toolStampBtn" type="button" data-tool="stamp">Pose de tuile</button>
+        </div>
+
+        <div id="selectedTileCard" class="selected-tile-card empty">
+          Aucune tuile sélectionnée.
         </div>
       </section>
 
       <section class="panel">
         <h2>Calques</h2>
-        <div class="layers-list">
-          <div class="layer-item">
+        <div class="layers-list" id="layersList">
+          <label class="layer-item is-active" data-layer="terrain">
             <div>
-              <strong>Fond</strong>
-              <small>Image de base</small>
+              <strong>Terrain</strong>
+              <small>Sols, eau, routes</small>
             </div>
-            <span class="layer-tag">Layer</span>
-          </div>
-          <div class="layer-item">
+            <div class="layer-actions">
+              <span class="layer-tag">Actif</span>
+              <input type="checkbox" class="layer-visibility" data-layer-toggle="terrain" checked />
+            </div>
+          </label>
+
+          <label class="layer-item" data-layer="deco">
             <div>
-              <strong>Grille</strong>
-              <small>Repères de construction</small>
+              <strong>Décor</strong>
+              <small>Arbres, herbes, rochers</small>
             </div>
-            <span class="layer-tag">Layer</span>
-          </div>
-          <div class="layer-item">
+            <div class="layer-actions">
+              <span class="layer-tag">Layer</span>
+              <input type="checkbox" class="layer-visibility" data-layer-toggle="deco" checked />
+            </div>
+          </label>
+
+          <label class="layer-item" data-layer="objects">
             <div>
-              <strong>Zones</strong>
-              <small>Zones intelligentes</small>
+              <strong>Objets</strong>
+              <small>Coffres, maisons, éléments de jeu</small>
             </div>
-            <span class="layer-tag">Layer</span>
-          </div>
-          <div class="layer-item">
-            <div>
-              <strong>Interface</strong>
-              <small>Sélection & outils</small>
+            <div class="layer-actions">
+              <span class="layer-tag">Layer</span>
+              <input type="checkbox" class="layer-visibility" data-layer-toggle="objects" checked />
             </div>
-            <span class="layer-tag">UI</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Sélection</h2>
+        <div id="selectionEmpty" class="selection-empty">Sélectionnez un élément posé sur la carte.</div>
+
+        <div id="selectionEditor" class="selection-editor hidden">
+          <label class="field">
+            <span>Nom</span>
+            <input id="selectedTileName" type="text" placeholder="Nom de l'élément" />
+          </label>
+
+          <label class="field">
+            <span>Calque</span>
+            <select id="selectedTileLayer">
+              <option value="terrain">Terrain</option>
+              <option value="deco">Décor</option>
+              <option value="objects">Objets</option>
+            </select>
+          </label>
+
+          <div class="button-row">
+            <button class="btn" id="duplicateSelectedBtn" type="button">Dupliquer</button>
+            <button class="btn" id="bringForwardBtn" type="button">Monter</button>
+            <button class="btn" id="sendBackwardBtn" type="button">Descendre</button>
+            <button class="btn btn-danger" id="deleteSelectedBtn" type="button">Supprimer</button>
           </div>
         </div>
       </section>
 
       <section class="panel info-panel">
-        <h2>Note open source</h2>
-        <p>
-          Cet éditeur s’appuie sur <strong>Konva.js</strong>, une bibliothèque open source
-          pour les interfaces graphiques HTML5 canvas.
-        </p>
+        <h2>Export</h2>
+        <div class="button-row">
+          <button class="btn btn-primary" id="exportBtn" type="button">Exporter PNG</button>
+        </div>
       </section>
     </aside>
 
     <main class="workspace">
       <header class="workspace-topbar">
         <div>
-          <h2>Éditeur de plateau</h2>
-          <p>Créez des zones de jeu claires, lisibles et rassurantes pour vos joueurs.</p>
+          <h2>Carte 2D</h2>
+          <p>Molette : zoomer. Glisser avec le clic du milieu ou maintenir espace + glisser pour déplacer la vue.</p>
         </div>
-
-        <div class="top-actions">
-          <button class="btn" id="deleteSelectedBtn">Supprimer la sélection</button>
-          <button class="btn btn-primary" id="exportBtn">Exporter PNG</button>
+        <div class="status-pills">
+          <span class="status-pill" id="activeLayerBadge">Calque actif : Terrain</span>
+          <span class="status-pill" id="activeToolBadge">Outil : Sélection</span>
         </div>
       </header>
 
@@ -158,6 +223,6 @@
   </div>
 
   <script src="https://unpkg.com/konva@9/konva.min.js"></script>
-  <script src="map.js"></script>
+  <script src="map-2-corrige.js"></script>
 </body>
 </html>
