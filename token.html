@@ -10,6 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/TransformControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/geometries/TextGeometry.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
 </head>
 <body>
     <div class="app-shell">
@@ -148,6 +151,14 @@
                                 <button id="duplicateMesh" type="button"><i class="fas fa-clone"></i> Dupliquer la sélection</button>
                                 <button id="deleteMesh" type="button"><i class="fas fa-trash"></i> Supprimer la sélection</button>
                             </div>
+                            <label for="text3dInput">Texte 3D</label>
+                            <input type="text" id="text3dInput" placeholder="Ex. 12, Boss, Roi...">
+                            <label for="text3dSize">Taille du texte</label>
+                            <input type="range" id="text3dSize" min="20" max="160" value="70">
+                            <span id="text3dSizeValue" class="inline-value">70</span>
+                            <div class="stacked-actions">
+                                <button id="addText3d" type="button"><i class="fas fa-font"></i> Ajouter le texte 3D</button>
+                            </div>
                         </div>
 
                         <div class="panel-card">
@@ -183,14 +194,16 @@
                             <span id="bevelSegmentsValue" class="inline-value">3</span>
                             <div class="stacked-actions">
                                 <button id="applyExtrude" type="button"><i class="fas fa-wand-magic-sparkles"></i> Appliquer à l'objet sélectionné</button>
+                                <button id="toggleBevelClick" type="button"><i class="fas fa-hand-pointer"></i> Mode congé par clic : OFF</button>
                             </div>
+                            <p class="mini-help">En mode congé par clic, clique l'objet sélectionné pour augmenter l'arrondi. Le congé est global sur l'objet.</p>
                         </div>
                     </aside>
 
                     <div class="center-workspace">
                         <div class="workspace-card workspace-card-3d">
                             <div class="canvas-toolbar">
-                                <span><i class="fas fa-mouse"></i> Clic sur un objet pour le sélectionner. Utilise le gizmo pour bouger, tourner ou agrandir.</span>
+                                <span><i class="fas fa-mouse"></i> Clic sur un objet pour le sélectionner. Utilise le gizmo pour bouger, tourner ou agrandir. Le mode congé par clic permet d'augmenter l'arrondi d'un objet.</span>
                             </div>
                             <div id="threeViewport" class="three-viewport">
                                 <div id="three-placeholder" class="three-placeholder">
