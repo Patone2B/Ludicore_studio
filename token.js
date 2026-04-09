@@ -21,7 +21,7 @@
     bevelSegments: $('bevelSegments'), bevelSegmentsValue: $('bevelSegmentsValue'), applyExtrude: $('applyExtrude'), scale3d: $('scale3d'), scale3dValue: $('scale3dValue'),
     rotateY3d: $('rotateY3d'), rotateY3dValue: $('rotateY3dValue'), centerMesh: $('centerMesh'), reset3dView: $('reset3dView'),
     threeViewport: $('threeViewport'), threePlaceholder: $('three-placeholder'), toggleGrid: $('toggleGrid'), focusSelection: $('focusSelection'),
-    objectName: $('objectName'), objectList: $('objectList')
+    objectName: $('objectName'), objectList: $('objectList'), text3dInput: $('text3dInput'), text3dSize: $('text3dSize'), text3dSizeValue: $('text3dSizeValue'), addText3d: $('addText3d'), toggleBevelClick: $('toggleBevelClick')
   };
 
   const deepClone = (v) => JSON.parse(JSON.stringify(v));
@@ -400,12 +400,93 @@
 
   let threeReady = false;
   let meshCounter = 1;
-  const T = { scene: null, camera: null, renderer: null, controls: null, transformControls: null, grid: null, meshes: [], selected: null, raycaster: null, ptr: null };
+  const T = { scene: null, camera: null, renderer: null, controls: null, transformControls: null, grid: null, meshes: [], selected: null, raycaster: null, ptr: null, bevelClickMode: false, font: null, fontPromise: null };
 
   function showPlaceholder(html) {
     if (ui.threePlaceholder) { ui.threePlaceholder.innerHTML = html; ui.threePlaceholder.style.display = 'flex'; }
   }
   function hidePlaceholder() { if (ui.threePlaceholder) ui.threePlaceholder.style.display = 'none'; }
+
+
+  function syncBevelClickButton() {
+    if (!ui.toggleBevelClick) return;
+    ui.toggleBevelClick.innerHTML = `<i class="fas fa-hand-pointer"></i> Mode congé par clic : ${T.bevelClickMode ? 'ON' : 'OFF'}`;
+    ui.toggleBevelClick.classList.toggle('active-toggle', T.bevelClickMode);
+  }
+
+  function ensureFontLoaded() {
+    if (T.font) return Promise.resolve(T.font);
+    if (T.fontPromise) return T.fontPromise;
+    T.fontPromise = new Promise((resolve, reject) => {
+      if (typeof THREE === 'undefined' || !THREE.FontLoader) {
+        reject(new Error('FontLoader indisponible'));
+        return;
+      }
+      const loader = new THREE.FontLoader();
+      loader.load('https://cdn.jsdelivr.net/npm/three@0.134.0/examples/fonts/helvetiker_regular.typeface.json', (font) => {
+        T.font = font;
+        resolve(font);
+      }, undefined, reject);
+    });
+    return T.fontPromise;
+  }
+
+  function getText3DOptions() {
+    const text = (ui.text3dInput?.value || '').trim();
+    const size = Number(ui.text3dSize?.value || 70) / 100;
+    return { text, size };
+  }
+
+  function createTextGeometry(text, p, size) {
+    if (!T.font || !text) return null;
+    const g = new THREE.TextGeometry(text, {
+      font: T.font,
+      size: Math.max(0.2, size || 0.7),
+      height: Math.max(0.08, p.depth),
+      curveSegments: 16,
+      bevelEnabled: p.bevelSize > 0,
+      bevelThickness: Math.max(0.03, p.bevelSize * 0.7),
+      bevelSize: Math.max(0, p.bevelSize),
+      bevelSegments: p.bevelSegments
+    });
+    g.computeBoundingBox();
+    if (g.boundingBox) {
+      const xMid = -0.5 * (g.boundingBox.max.x - g.boundingBox.min.x);
+      const yMid = -0.5 * (g.boundingBox.max.y - g.boundingBox.min.y);
+      g.translate(xMid, yMid, 0);
+    }
+    return g;
+  }
+
+  function createRoundedBoxGeometry(p) {
+    const radius = Math.max(0.02, Math.min(0.95, p.bevelSize || 0.12));
+    return new THREE.RoundedBoxGeometry(2, 2, 2, Math.max(2, (p.bevelSegments || 3) * 2), radius);
+  }
+
+  function applyBevelStepToSelected() {
+    if (!T.selected) return;
+    const m = T.selected;
+    const current = m.userData.params || getParams();
+    const next = {
+      depth: current.depth ?? getParams().depth,
+      bevelSize: Math.min((current.bevelSize || 0) + 0.04, 0.8),
+      bevelSegments: Math.min((current.bevelSegments || 1) + 1, 8)
+    };
+    const kind = m.userData.shapeType;
+    let ng = null;
+    if (kind === 'text3d') {
+      ng = createTextGeometry(m.userData.textValue || 'Texte', next, m.userData.textSize || 0.7);
+    } else if (kind === 'box') {
+      ng = createRoundedBoxGeometry(next);
+    } else if (kind === 'extrudeStar' || kind === 'extrudeBadge') {
+      ng = createGeometry(kind, next);
+    }
+    if (!ng) return;
+    m.geometry.dispose();
+    m.geometry = ng;
+    m.userData.params = next;
+    sync3DUI();
+  }
 
   function resize3D() {
     if (!threeReady || !T.renderer || !ui.threeViewport) return;
@@ -481,7 +562,7 @@
 
   function init3D() {
     if (threeReady) return;
-    if (typeof THREE === 'undefined' || !THREE.OrbitControls || !THREE.TransformControls) {
+    if (typeof THREE === 'undefined' || !THREE.OrbitControls || !THREE.TransformControls || !THREE.FontLoader || !THREE.TextGeometry) {
       showPlaceholder('<i class="fas fa-triangle-exclamation" style="color:#f59e0b;font-size:2rem;margin-bottom:12px"></i><p>Three.js ou ses contrôles n\'ont pas pu être chargés.<br>Vérifie la connexion Internet puis recharge la page.</p>');
       return;
     }
@@ -522,7 +603,12 @@
       T.ptr.y = -((e.clientY - r.top) / r.height) * 2 + 1;
       T.raycaster.setFromCamera(T.ptr, T.camera);
       const hits = T.raycaster.intersectObjects(T.meshes, false);
-      selectMesh(hits.length ? hits[0].object : null);
+      const hitMesh = hits.length ? hits[0].object : null;
+      if (T.bevelClickMode && hitMesh && hitMesh === T.selected) {
+        applyBevelStepToSelected();
+        return;
+      }
+      selectMesh(hitMesh);
     });
 
     threeReady = true;
@@ -556,7 +642,7 @@
 
   function createGeometry(kind, p) {
     switch (kind) {
-      case 'box': return new THREE.BoxGeometry(2, 2, 2);
+      case 'box': return (p?.bevelSize || 0) > 0.001 && THREE.RoundedBoxGeometry ? createRoundedBoxGeometry(p) : new THREE.BoxGeometry(2, 2, 2);
       case 'cylinder': return new THREE.CylinderGeometry(1, 1, 2, 48);
       case 'sphere': return new THREE.SphereGeometry(1.2, 48, 32);
       case 'token': return new THREE.CylinderGeometry(1.5, 1.5, 0.35, 64);
@@ -571,17 +657,44 @@
     }
   }
 
-  function buildMesh(kind, color, p) {
-    const geo = createGeometry(kind, p);
+  function buildMesh(kind, color, p, options = {}) {
+    let geo = null;
+    if (kind === 'text3d') geo = createTextGeometry(options.text || 'Texte', p, options.size || 0.7);
+    else geo = createGeometry(kind, p);
     const mat = new THREE.MeshStandardMaterial({ color: color || '#3b82f6', metalness: 0.2, roughness: 0.6 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.castShadow = true;
     mesh.position.y = (kind === 'token') ? 0.2 : 1.2;
     if (kind === 'extrudeStar' || kind === 'extrudeBadge') { mesh.rotation.x = -Math.PI / 2; mesh.position.y = 0.6; }
+    if (kind === 'text3d') { mesh.position.y = Math.max(0.8, (options.size || 0.7) * 0.8); }
     mesh.userData.shapeType = kind;
     mesh.userData.params = { ...p };
-    mesh.userData.name = `Objet ${meshCounter++}`;
+    mesh.userData.name = options.name || `Objet ${meshCounter++}`;
+    if (kind === 'text3d') {
+      mesh.userData.textValue = options.text || 'Texte';
+      mesh.userData.textSize = options.size || 0.7;
+    }
     return mesh;
+  }
+
+
+  async function addText3D() {
+    if (!threeReady) return;
+    const { text, size } = getText3DOptions();
+    if (!text) return;
+    try {
+      await ensureFontLoaded();
+    } catch (err) {
+      alert('Impossible de charger la police 3D. Vérifie Internet puis recharge la page.');
+      return;
+    }
+    const color = ui.meshColor?.value || '#3b82f6';
+    const mesh = buildMesh('text3d', color, getParams(), { text, size, name: `Texte ${meshCounter++}` });
+    mesh.position.x = (T.meshes.length % 4) * 2.8 - 4.2;
+    mesh.position.z = Math.floor(T.meshes.length / 4) * 2.8 - 2.8;
+    T.scene.add(mesh);
+    T.meshes.push(mesh);
+    selectMesh(mesh);
   }
 
   function addPrimitive3D() {
@@ -595,10 +708,17 @@
   }
 
   ui.addPrimitive?.addEventListener('click', () => { init3D(); if (threeReady) addPrimitive3D(); });
+  ui.addText3d?.addEventListener('click', async () => { init3D(); if (threeReady) await addText3D(); });
+  ui.text3dSize?.addEventListener('input', () => { if (ui.text3dSizeValue) ui.text3dSizeValue.textContent = ui.text3dSize.value; });
+  ui.toggleBevelClick?.addEventListener('click', () => { T.bevelClickMode = !T.bevelClickMode; syncBevelClickButton(); });
   ui.duplicateMesh?.addEventListener('click', () => {
     if (!threeReady || !T.selected) return;
     const source = T.selected;
-    const clone = buildMesh(source.userData.shapeType, `#${source.material.color.getHexString()}`, source.userData.params || getParams());
+    const clone = buildMesh(source.userData.shapeType, `#${source.material.color.getHexString()}`, source.userData.params || getParams(), {
+      text: source.userData.textValue,
+      size: source.userData.textSize,
+      name: `${source.userData.name || 'Objet'} copie`
+    });
     clone.position.copy(source.position).add(new THREE.Vector3(1.5, 0, 1.5));
     clone.rotation.copy(source.rotation); clone.scale.copy(source.scale);
     T.scene.add(clone); T.meshes.push(clone); selectMesh(clone);
@@ -611,9 +731,14 @@
   ui.applyExtrude?.addEventListener('click', () => {
     if (!threeReady || !T.selected) return;
     const m = T.selected, kind = m.userData.shapeType;
-    if (kind !== 'extrudeStar' && kind !== 'extrudeBadge') return;
-    const p = getParams(), ng = createGeometry(kind, p);
-    m.geometry.dispose(); m.geometry = ng; m.userData.params = p;
+    const p = getParams();
+    let ng = null;
+    if (kind === 'extrudeStar' || kind === 'extrudeBadge' || kind === 'box') ng = createGeometry(kind, p);
+    else if (kind === 'text3d') ng = createTextGeometry(m.userData.textValue || 'Texte', p, m.userData.textSize || 0.7);
+    if (!ng) return;
+    m.geometry.dispose();
+    m.geometry = ng;
+    m.userData.params = p;
   });
   ui.centerMesh?.addEventListener('click', () => { if (T.selected) T.selected.position.set(0, T.selected.position.y, 0); sync3DUI(); });
   ui.reset3dView?.addEventListener('click', () => { if (!threeReady) return; T.camera.position.set(7, 6, 9); T.controls.target.set(0, 1, 0); T.controls.update(); });
@@ -642,5 +767,7 @@
   syncLineWidthLabel();
   syncImageScaleSlider();
   syncSelected2DPanel();
+  if (ui.text3dSizeValue && ui.text3dSize) ui.text3dSizeValue.textContent = ui.text3dSize.value;
+  syncBevelClickButton();
   redraw2D();
 })();
