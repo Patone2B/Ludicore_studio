@@ -1,4 +1,4 @@
-DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -6,6 +6,10 @@ DOCTYPE html>
     <title>Éditeur 2D / 3D de Pions, Jetons et Dés</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="token.css">
+
+    <!-- Three.js r134 chargé AVANT token.js (global window.THREE disponible) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
     <div class="app-shell">
@@ -27,7 +31,6 @@ DOCTYPE html>
         </div>
 
         <main>
-
             <!-- ══════════════ 2D EDITOR ══════════════ -->
             <section id="editor2d" class="editor-panel active">
                 <div class="toolbar-grid">
@@ -41,10 +44,8 @@ DOCTYPE html>
                             <option value="line">╱ Ligne</option>
                             <option value="eraser">🧹 Gomme</option>
                         </select>
-
                         <label for="colorPicker">Couleur</label>
                         <input type="color" id="colorPicker" value="#1f2937">
-
                         <label for="lineWidth">Épaisseur</label>
                         <input type="range" id="lineWidth" min="1" max="30" value="4">
                         <span id="lineWidthValue" class="inline-value">4 px</span>
@@ -57,7 +58,6 @@ DOCTYPE html>
                         <div class="stacked-actions" style="margin-top:8px;">
                             <button id="addText" type="button"><i class="fas fa-plus"></i> Ajouter le texte</button>
                         </div>
-
                         <label for="imageUpload">Image de fond</label>
                         <input type="file" id="imageUpload" accept="image/*">
                         <label for="imageScale">Taille de l'image</label>
@@ -109,10 +109,8 @@ DOCTYPE html>
                             <option value="extrudeStar">⭐ Étoile extrudée</option>
                             <option value="extrudeBadge">🏷️ Badge extrudé</option>
                         </select>
-
                         <label for="meshColor">Couleur</label>
                         <input type="color" id="meshColor" value="#3b82f6">
-
                         <div class="stacked-actions" style="margin-top:14px;">
                             <button id="addPrimitive" type="button"><i class="fas fa-cube"></i> Ajouter l'objet</button>
                             <button id="deleteMesh" type="button"><i class="fas fa-trash"></i> Supprimer la sélection</button>
@@ -124,15 +122,12 @@ DOCTYPE html>
                         <label for="extrudeDepth">Profondeur d'extrusion</label>
                         <input type="range" id="extrudeDepth" min="2" max="80" value="18">
                         <span id="extrudeDepthValue" class="inline-value">18</span>
-
                         <label for="bevelSize">Taille du congé</label>
                         <input type="range" id="bevelSize" min="0" max="20" value="3">
                         <span id="bevelSizeValue" class="inline-value">3</span>
-
                         <label for="bevelSegments">Segments du congé</label>
                         <input type="range" id="bevelSegments" min="1" max="8" value="3">
                         <span id="bevelSegmentsValue" class="inline-value">3</span>
-
                         <div class="stacked-actions">
                             <button id="applyExtrude" type="button"><i class="fas fa-wand-magic-sparkles"></i> Appliquer à l'objet sélectionné</button>
                         </div>
@@ -143,11 +138,9 @@ DOCTYPE html>
                         <label for="scale3d">Échelle</label>
                         <input type="range" id="scale3d" min="20" max="250" value="100">
                         <span id="scale3dValue" class="inline-value">100 %</span>
-
                         <label for="rotateY3d">Rotation Y</label>
                         <input type="range" id="rotateY3d" min="0" max="360" value="0">
                         <span id="rotateY3dValue" class="inline-value">0°</span>
-
                         <div class="stacked-actions">
                             <button id="centerMesh" type="button"><i class="fas fa-crosshairs"></i> Recentrer l'objet</button>
                             <button id="reset3dView" type="button"><i class="fas fa-camera-rotate"></i> Réinitialiser la vue</button>
@@ -157,12 +150,16 @@ DOCTYPE html>
 
                 <div class="workspace-card workspace-card-3d">
                     <div class="canvas-toolbar">
-                        <span><i class="fas fa-mouse"></i> Rotation: clic gauche &nbsp;|&nbsp; Déplacement: clic droit &nbsp;|&nbsp; Zoom: molette</span>
+                        <span><i class="fas fa-mouse"></i> Rotation : clic gauche &nbsp;|&nbsp; Déplacement : clic droit &nbsp;|&nbsp; Zoom : molette</span>
                     </div>
-                    <div id="threeViewport" class="three-viewport"></div>
+                    <div id="threeViewport" class="three-viewport">
+                        <div id="three-placeholder" class="three-placeholder">
+                            <i class="fas fa-cube fa-3x"></i>
+                            <p>Clique sur <strong>Ajouter l'objet</strong> pour démarrer</p>
+                        </div>
+                    </div>
                 </div>
             </section>
-
         </main>
     </div>
 
