@@ -32,6 +32,14 @@
     dragImage: false, dragOffsetX: 0, dragOffsetY: 0, history: [], future: [], selectedIndex: -1, dragItem: false
   };
 
+  function cancel2DInteractions() {
+    state2D.drawing = false;
+    state2D.dragImage = false;
+    state2D.dragItem = false;
+    state2D.currentStroke = null;
+    canvas.classList.remove('dragging');
+  }
+
   const make2DSnap = () => ({ items: deepClone(state2D.items), background: deepClone(state2D.background) });
   function push2DHistory() {
     state2D.history.push(make2DSnap());
@@ -248,11 +256,6 @@
       return;
     }
 
-    if (state2D.background && pointInBG(pos.x, pos.y)) {
-      state2D.dragImage = true; state2D.dragOffsetX = pos.x - state2D.background.x; state2D.dragOffsetY = pos.y - state2D.background.y;
-      push2DHistory(); return;
-    }
-
     push2DHistory();
     state2D.selectedIndex = -1;
     syncSelected2DPanel();
@@ -297,6 +300,7 @@
       redraw2D();
     }
   });
+  canvas.addEventListener('mouseleave', () => { if (state2D.drawing || state2D.dragItem || state2D.dragImage) { cancel2DInteractions(); redraw2D(); } });
 
   if (ui.lineWidth) ui.lineWidth.addEventListener('input', syncLineWidthLabel);
   if (ui.imageScale) ui.imageScale.addEventListener('input', () => {
@@ -393,7 +397,10 @@
     ui.editor3d?.classList.toggle('active', !is2D);
     ui.mode2dBtn?.classList.toggle('active', is2D);
     ui.mode3dBtn?.classList.toggle('active', !is2D);
-    if (!is2D) init3D();
+    if (!is2D) {
+      init3D();
+      setTimeout(resize3D, 30);
+    }
   }
   ui.mode2dBtn?.addEventListener('click', () => setActiveMode('2d'));
   ui.mode3dBtn?.addEventListener('click', () => setActiveMode('3d'));
@@ -459,8 +466,40 @@
   }
 
   function createRoundedBoxGeometry(p) {
-    const radius = Math.max(0.02, Math.min(0.95, p.bevelSize || 0.12));
-    return new THREE.RoundedBoxGeometry(2, 2, 2, Math.max(2, (p.bevelSegments || 3) * 2), radius);
+    const width = 2;
+    const height = 2;
+    const depth = Math.max(0.25, p.depth || 1);
+    const radius = Math.max(0.02, Math.min(Math.min(width, height, depth) * 0.24, p.bevelSize || 0.12));
+    return new THREE.RoundedBoxGeometry(width, height, depth, Math.max(2, (p.bevelSegments || 3) * 2), radius);
+  }
+
+  function buildCircleShape(radius = 1.45) {
+    const s = new THREE.Shape();
+    s.absarc(0, 0, radius, 0, Math.PI * 2, false);
+    return s;
+  }
+
+  function createTokenGeometry(p) {
+    return new THREE.ExtrudeGeometry(buildCircleShape(1.45), {
+      depth: Math.max(0.12, p.depth || 0.35),
+      curveSegments: 48,
+      bevelEnabled: (p.bevelSize || 0) > 0,
+      bevelSize: Math.max(0, Math.min(0.22, p.bevelSize || 0)),
+      bevelThickness: Math.max(0.02, Math.min(0.18, (p.bevelSize || 0) * 0.7)),
+      bevelSegments: Math.max(1, p.bevelSegments || 3),
+      steps: 1
+    });
+  }
+
+  function centerGeometry(geometry) {
+    if (!geometry) return geometry;
+    geometry.computeBoundingBox();
+    if (geometry.boundingBox) {
+      const center = new THREE.Vector3();
+      geometry.boundingBox.getCenter(center);
+      geometry.translate(-center.x, -center.y, -center.z);
+    }
+    return geometry;
   }
 
   function applyBevelStepToSelected() {
@@ -468,23 +507,19 @@
     const m = T.selected;
     const current = m.userData.params || getParams();
     const next = {
-      depth: current.depth ?? getParams().depth,
+      depth: Math.max(0.18, current.depth ?? getParams().depth),
       bevelSize: Math.min((current.bevelSize || 0) + 0.04, 0.8),
       bevelSegments: Math.min((current.bevelSegments || 1) + 1, 8)
     };
     const kind = m.userData.shapeType;
     let ng = null;
-    if (kind === 'text3d') {
-      ng = createTextGeometry(m.userData.textValue || 'Texte', next, m.userData.textSize || 0.7);
-    } else if (kind === 'box') {
-      ng = createRoundedBoxGeometry(next);
-    } else if (kind === 'extrudeStar' || kind === 'extrudeBadge') {
-      ng = createGeometry(kind, next);
-    }
+    if (kind === 'text3d') ng = createTextGeometry(m.userData.textValue || 'Texte', next, m.userData.textSize || 0.7);
+    else ng = createGeometry(kind, next);
     if (!ng) return;
     m.geometry.dispose();
     m.geometry = ng;
     m.userData.params = next;
+    if (kind === 'token') m.position.y = Math.max(0.18, next.depth / 2);
     sync3DUI();
   }
 
@@ -637,23 +672,45 @@
   }
 
   function getParams() {
-    return { depth: Number(ui.extrudeDepth?.value || 18) / 25, bevelSize: Number(ui.bevelSize?.value || 3) / 25, bevelSegments: Number(ui.bevelSegments?.value || 3) };
+    return {
+      depth: Number(ui.extrudeDepth?.value || 18) / 10,
+      bevelSize: Number(ui.bevelSize?.value || 3) / 25,
+      bevelSegments: Number(ui.bevelSegments?.value || 3)
+    };
   }
 
   function createGeometry(kind, p) {
+    const params = {
+      depth: Math.max(0.2, (p && p.depth) || 1.8),
+      bevelSize: Math.max(0, (p && p.bevelSize) || 0),
+      bevelSegments: Math.max(1, (p && p.bevelSegments) || 3)
+    };
     switch (kind) {
-      case 'box': return (p?.bevelSize || 0) > 0.001 && THREE.RoundedBoxGeometry ? createRoundedBoxGeometry(p) : new THREE.BoxGeometry(2, 2, 2);
-      case 'cylinder': return new THREE.CylinderGeometry(1, 1, 2, 48);
-      case 'sphere': return new THREE.SphereGeometry(1.2, 48, 32);
-      case 'token': return new THREE.CylinderGeometry(1.5, 1.5, 0.35, 64);
-      case 'pyramid': return new THREE.ConeGeometry(1.3, 2.2, 4);
-      case 'cone': return new THREE.ConeGeometry(1.2, 2.4, 32);
+      case 'box':
+        return params.bevelSize > 0.001 && THREE.RoundedBoxGeometry ? createRoundedBoxGeometry(params) : new THREE.BoxGeometry(2, 2, params.depth);
+      case 'cylinder':
+        return new THREE.CylinderGeometry(1, 1, Math.max(0.4, params.depth), 48, 1, false);
+      case 'sphere':
+        return new THREE.SphereGeometry(Math.max(0.45, 0.7 + (params.depth * 0.1)), 48, 32);
+      case 'token':
+        return centerGeometry(createTokenGeometry(params));
+      case 'pyramid':
+        return new THREE.ConeGeometry(1.3, Math.max(0.5, params.depth * 1.3), 4);
+      case 'cone':
+        return new THREE.ConeGeometry(1.2, Math.max(0.5, params.depth * 1.35), 32);
       case 'extrudeStar':
       case 'extrudeBadge':
-        return new THREE.ExtrudeGeometry(buildShape(kind), {
-          depth: p.depth, bevelEnabled: p.bevelSize > 0, bevelSize: p.bevelSize, bevelThickness: Math.max(0.05, p.bevelSize * 0.7), bevelSegments: p.bevelSegments, curveSegments: 32
-        });
-      default: return new THREE.BoxGeometry(2, 2, 2);
+        return centerGeometry(new THREE.ExtrudeGeometry(buildShape(kind), {
+          depth: params.depth,
+          bevelEnabled: params.bevelSize > 0,
+          bevelSize: params.bevelSize,
+          bevelThickness: Math.max(0.05, params.bevelSize * 0.7),
+          bevelSegments: params.bevelSegments,
+          curveSegments: 32,
+          steps: 1
+        }));
+      default:
+        return new THREE.BoxGeometry(2, 2, params.depth);
     }
   }
 
@@ -664,9 +721,10 @@
     const mat = new THREE.MeshStandardMaterial({ color: color || '#3b82f6', metalness: 0.2, roughness: 0.6 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.castShadow = true;
-    mesh.position.y = (kind === 'token') ? 0.2 : 1.2;
-    if (kind === 'extrudeStar' || kind === 'extrudeBadge') { mesh.rotation.x = -Math.PI / 2; mesh.position.y = 0.6; }
-    if (kind === 'text3d') { mesh.position.y = Math.max(0.8, (options.size || 0.7) * 0.8); }
+    mesh.position.y = 1.2;
+    if (kind === 'token') mesh.position.y = Math.max(0.18, ((p && p.depth) || 0.35) / 2);
+    if (kind === 'extrudeStar' || kind === 'extrudeBadge') mesh.position.y = Math.max(0.25, ((p && p.depth) || 1) / 2);
+    if (kind === 'text3d') mesh.position.y = Math.max(0.8, (options.size || 0.7) * 0.8);
     mesh.userData.shapeType = kind;
     mesh.userData.params = { ...p };
     mesh.userData.name = options.name || `Objet ${meshCounter++}`;
@@ -676,7 +734,6 @@
     }
     return mesh;
   }
-
 
   async function addText3D() {
     if (!threeReady) return;
@@ -733,12 +790,15 @@
     const m = T.selected, kind = m.userData.shapeType;
     const p = getParams();
     let ng = null;
-    if (kind === 'extrudeStar' || kind === 'extrudeBadge' || kind === 'box') ng = createGeometry(kind, p);
-    else if (kind === 'text3d') ng = createTextGeometry(m.userData.textValue || 'Texte', p, m.userData.textSize || 0.7);
+    if (kind === 'text3d') ng = createTextGeometry(m.userData.textValue || 'Texte', p, m.userData.textSize || 0.7);
+    else ng = createGeometry(kind, p);
     if (!ng) return;
     m.geometry.dispose();
     m.geometry = ng;
     m.userData.params = p;
+    if (kind === 'token') m.position.y = Math.max(0.18, p.depth / 2);
+    if (kind === 'extrudeStar' || kind === 'extrudeBadge') m.position.y = Math.max(0.25, p.depth / 2);
+    sync3DUI();
   });
   ui.centerMesh?.addEventListener('click', () => { if (T.selected) T.selected.position.set(0, T.selected.position.y, 0); sync3DUI(); });
   ui.reset3dView?.addEventListener('click', () => { if (!threeReady) return; T.camera.position.set(7, 6, 9); T.controls.target.set(0, 1, 0); T.controls.update(); });
