@@ -307,3 +307,7 @@ canvas.select-mode.dragging { cursor: grabbing; }
     .panel-card, .workspace-card { padding: 16px; }
     .three-viewport { min-height: 520px; }
 }
+
+#objectList option { padding: 6px 8px; }
+.three-viewport { display: flex; }
+.three-viewport > canvas { border-radius: 16px; }
