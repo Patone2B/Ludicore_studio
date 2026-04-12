@@ -21,7 +21,8 @@
     bevelSegments: $('bevelSegments'), bevelSegmentsValue: $('bevelSegmentsValue'), applyExtrude: $('applyExtrude'), scale3d: $('scale3d'), scale3dValue: $('scale3dValue'),
     rotateY3d: $('rotateY3d'), rotateY3dValue: $('rotateY3dValue'), centerMesh: $('centerMesh'), reset3dView: $('reset3dView'),
     threeViewport: $('threeViewport'), threePlaceholder: $('three-placeholder'), toggleGrid: $('toggleGrid'), focusSelection: $('focusSelection'),
-    objectName: $('objectName'), objectList: $('objectList'), text3dInput: $('text3dInput'), text3dSize: $('text3dSize'), text3dSizeValue: $('text3dSizeValue'), addText3d: $('addText3d'), toggleBevelClick: $('toggleBevelClick')
+    objectName: $('objectName'), objectList: $('objectList'), text3dInput: $('text3dInput'), text3dSize: $('text3dSize'), text3dSizeValue: $('text3dSizeValue'), addText3d: $('addText3d'), toggleBevelClick: $('toggleBevelClick'),
+    saveLocal3d: $('saveLocal3d'), loadLocal3d: $('loadLocal3d'), importJSON3d: $('importJSON3d'), exportJSON3d: $('exportJSON3d'), exportPNG3d: $('exportPNG3d'), exportOBJ3d: $('exportOBJ3d')
   };
 
   const deepClone = (v) => JSON.parse(JSON.stringify(v));
@@ -421,6 +422,138 @@
     ui.toggleBevelClick.classList.toggle('active-toggle', T.bevelClickMode);
   }
 
+  function downloadTextFile(filename, content, mime = 'text/plain') {
+    const blob = new Blob([content], { type: mime });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 500);
+  }
+
+  function serializeMesh(mesh) {
+    return {
+      name: mesh.userData.name || 'Objet 3D',
+      shapeType: mesh.userData.shapeType || 'box',
+      color: `#${mesh.material.color.getHexString()}`,
+      position: { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z },
+      rotation: { x: mesh.rotation.x, y: mesh.rotation.y, z: mesh.rotation.z },
+      scale: { x: mesh.scale.x, y: mesh.scale.y, z: mesh.scale.z },
+      params: deepClone(mesh.userData.params || getParams()),
+      textValue: mesh.userData.textValue || '',
+      textSize: mesh.userData.textSize || null
+    };
+  }
+
+  function make3DSnapshot() {
+    return {
+      version: 1,
+      camera: threeReady ? {
+        position: { x: T.camera.position.x, y: T.camera.position.y, z: T.camera.position.z },
+        target: { x: T.controls.target.x, y: T.controls.target.y, z: T.controls.target.z }
+      } : null,
+      objects: T.meshes.map(serializeMesh)
+    };
+  }
+
+  async function restore3DScene(data) {
+    init3D();
+    if (!threeReady) return;
+    const objects = Array.isArray(data?.objects) ? data.objects : [];
+    for (const mesh of [...T.meshes]) {
+      T.scene.remove(mesh);
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+    }
+    T.meshes = [];
+    selectMesh(null);
+
+    for (const item of objects) {
+      const params = item?.params || getParams();
+      if (item?.shapeType === 'text3d') {
+        try {
+          await ensureFontLoaded();
+        } catch (err) {
+          alert('Impossible de recharger le texte 3D : la police n\'a pas été chargée.');
+          continue;
+        }
+      }
+      const mesh = buildMesh(item?.shapeType || 'box', item?.color || '#3b82f6', params, {
+        text: item?.textValue || 'Texte',
+        size: item?.textSize || 0.7,
+        name: item?.name || 'Objet 3D'
+      });
+      const pos = item?.position || {};
+      const rot = item?.rotation || {};
+      const scl = item?.scale || {};
+      mesh.position.set(Number(pos.x) || 0, Number(pos.y) || 0, Number(pos.z) || 0);
+      mesh.rotation.set(Number(rot.x) || 0, Number(rot.y) || 0, Number(rot.z) || 0);
+      mesh.scale.set(Number(scl.x) || 1, Number(scl.y) || 1, Number(scl.z) || 1);
+      T.scene.add(mesh);
+      T.meshes.push(mesh);
+    }
+
+    if (data?.camera && T.camera && T.controls) {
+      const cp = data.camera.position || {};
+      const ct = data.camera.target || {};
+      T.camera.position.set(Number(cp.x) || 7, Number(cp.y) || 6, Number(cp.z) || 9);
+      T.controls.target.set(Number(ct.x) || 0, Number(ct.y) || 1, Number(ct.z) || 0);
+      T.controls.update();
+    }
+
+    updateObjectList();
+    if (T.meshes[0]) selectMesh(T.meshes[0]);
+  }
+
+  async function import3DFromJSONText(text) {
+    const data = JSON.parse(text);
+    await restore3DScene(data);
+  }
+
+  function export3DAsJSON() {
+    downloadTextFile('token-3d.json', JSON.stringify(make3DSnapshot(), null, 2), 'application/json');
+  }
+
+  function save3DLocal() {
+    localStorage.setItem('token3dData', JSON.stringify(make3DSnapshot()));
+    alert('Projet 3D sauvegardé !');
+  }
+
+  async function load3DLocal() {
+    const raw = localStorage.getItem('token3dData');
+    if (!raw) return alert('Aucune sauvegarde 3D.');
+    try {
+      await import3DFromJSONText(raw);
+    } catch (err) {
+      console.error(err);
+      alert('Sauvegarde 3D invalide.');
+    }
+  }
+
+  function export3DAsPNG() {
+    init3D();
+    if (!threeReady || !T.renderer) return;
+    T.renderer.render(T.scene, T.camera);
+    const link = document.createElement('a');
+    link.href = T.renderer.domElement.toDataURL('image/png');
+    link.download = 'token-3d.png';
+    link.click();
+  }
+
+  function export3DAsOBJ() {
+    init3D();
+    if (!threeReady) return;
+    if (typeof THREE.OBJExporter === 'undefined') {
+      alert('L\'export OBJ n\'est pas disponible.');
+      return;
+    }
+    const exporter = new THREE.OBJExporter();
+    const group = new THREE.Group();
+    T.meshes.forEach((mesh) => group.add(mesh.clone()));
+    const objText = exporter.parse(group);
+    downloadTextFile('token-3d.obj', objText, 'text/plain');
+  }
+
   function ensureFontLoaded() {
     if (T.font) return Promise.resolve(T.font);
     if (T.fontPromise) return T.fontPromise;
@@ -815,6 +948,32 @@
   ui.snapRotate?.addEventListener('input', updateTransformSnaps);
   ui.objectName?.addEventListener('input', () => { if (!T.selected) return; T.selected.userData.name = ui.objectName.value || 'Objet 3D'; updateObjectList(); });
   ui.objectList?.addEventListener('change', () => { const idx = Number(ui.objectList.value); if (Number.isInteger(idx) && T.meshes[idx]) selectMesh(T.meshes[idx]); });
+
+  ui.saveLocal3d?.addEventListener('click', save3DLocal);
+  ui.loadLocal3d?.addEventListener('click', () => { load3DLocal(); });
+  ui.exportJSON3d?.addEventListener('click', export3DAsJSON);
+  ui.exportPNG3d?.addEventListener('click', export3DAsPNG);
+  ui.exportOBJ3d?.addEventListener('click', export3DAsOBJ);
+  ui.importJSON3d?.addEventListener('click', () => {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = '.json,application/json';
+    inp.onchange = () => {
+      const file = inp.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          await import3DFromJSONText(String(reader.result || ''));
+        } catch (err) {
+          console.error(err);
+          alert('JSON 3D invalide.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    inp.click();
+  });
 
   const bindSlider = (el, lbl, fmt, fn) => { if (!el) return; el.addEventListener('input', () => { if (lbl) lbl.textContent = fmt(el.value); fn(el.value); }); };
   bindSlider(ui.extrudeDepth, ui.extrudeDepthValue, (v) => v, () => {});
