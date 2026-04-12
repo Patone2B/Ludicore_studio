@@ -13,6 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/FontLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/geometries/TextGeometry.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/exporters/OBJExporter.js"></script>
 </head>
 <body>
     <div class="app-shell">
@@ -230,6 +231,18 @@
                             <div class="stacked-actions">
                                 <button id="centerMesh" type="button"><i class="fas fa-crosshairs"></i> Recentrer l'objet</button>
                                 <button id="reset3dView" type="button"><i class="fas fa-camera-rotate"></i> Réinitialiser la vue</button>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <h2>Projet 3D</h2>
+                            <div class="stacked-actions" style="margin-top:0">
+                                <button id="saveLocal3d" type="button"><i class="fas fa-floppy-disk"></i> Sauvegarder 3D</button>
+                                <button id="loadLocal3d" type="button"><i class="fas fa-folder-open"></i> Charger 3D</button>
+                                <button id="importJSON3d" type="button"><i class="fas fa-file-import"></i> Importer JSON 3D</button>
+                                <button id="exportJSON3d" type="button"><i class="fas fa-file-export"></i> Exporter JSON 3D</button>
+                                <button id="exportPNG3d" type="button"><i class="fas fa-file-image"></i> Exporter PNG 3D</button>
+                                <button id="exportOBJ3d" type="button"><i class="fas fa-cube"></i> Exporter OBJ</button>
                             </div>
                         </div>
                     </aside>
