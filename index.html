@@ -6,143 +6,190 @@
   <title>Studio de Jeux de Plateau</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="page-shell">
-    <header class="topbar">
-      <div class="brand">
+  <div class="app-shell">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand">
         <div class="brand-mark">SJ</div>
-        <div>
-          <h1>Studio de Jeux de Plateau</h1>
-          <p>Concevez vos cartes, plateaux, règles et prototypes depuis un seul espace.</p>
-        </div>
+        <span class="brand-label">Studio</span>
       </div>
-    </header>
 
-    <section class="ad-banner ad-banner-top" aria-label="Emplacement publicitaire">
-      <span>Bandeau publicitaire</span>
-    </section>
-
-    <main class="main-content">
-      <section class="hero card">
-        <div class="hero-copy">
-          <span class="eyebrow">Studio en ligne</span>
-          <h2>Créez votre jeu de plateau de manière simple, propre et professionnelle.</h2>
-          <p>
-            Donnez forme à vos idées grâce à un studio pensé pour la création de cartes,
-            de plateaux, de scripts, de règles et de prototypes imprimables.
-          </p>
-          <div class="hero-actions">
-            <button class="primary-btn" id="startProjectBtn">Commencer un projet</button>
-            <button class="secondary-btn" id="aboutBtn">En savoir plus</button>
-          </div>
-        </div>
-        <div class="hero-panel">
-          <div class="mini-stat">
-            <strong>Création</strong>
-            <span>Cartes, plateaux, jetons</span>
-          </div>
-          <div class="mini-stat">
-            <strong>Organisation</strong>
-            <span>Projet centralisé et modules dédiés</span>
-          </div>
-          <div class="mini-stat">
-            <strong>Export</strong>
-            <span>Formats print &amp; play et partage</span>
-          </div>
-        </div>
-      </section>
-
-     <section class="button-hub card">
-  <div class="section-head">
-    <h3>Accès rapide au studio</h3>
-    <p>Ouvrez directement les modules principaux de création.</p>
-  </div>
-
-  <div class="feature-grid feature-grid-compact">
-    <a href="carte.html" class="feature-button feature-card-shape">
-      <span class="feature-icon">🃏</span>
-      <span class="feature-title">Créateur de cartes</span>
-      <span class="feature-desc">Concevez des cartes recto/verso, visuels, textes et statistiques.</span>
-    </a>
-
-    <a href="Map.html" class="feature-button feature-board-shape">
-      <span class="feature-icon">🎲</span>
-      <span class="feature-title">Éditeur de plateau</span>
-      <span class="feature-desc">Créez zones, tuiles, cases et éléments de jeu.</span>
-    </a>
-
-    <a href="rules.html" class="feature-button feature-rules-shape">
-      <span class="feature-icon">📘</span>
-      <span class="feature-title">Règles du jeu</span>
-      <span class="feature-desc">Rédigez et organisez le livret de règles.</span>
-    </a>
-
-    <a href="token.html" class="feature-button classic-button">
-      <span class="feature-icon">🧩</span>
-      <span class="feature-title">Pions &amp; jetons</span>
-      <span class="feature-desc">Créez les composants visuels du jeu.</span>
-    </a>
-
-   <a href="sound.html" class=feature-button feature-rules-shape">
-        <span class="feature-icon"> 🎶</span>
-        <span class="feature-title"> Bande Son </span>
-        <span class="feature-desc"> Ajouter les liens pour avoir votre bande son</span>
-      </a>
-
-
-   <a href="quest.html" class=feature-button feature-rules-shape">
-        <span class="feature-icon"> 🎶</span>
-        <span class="feature-title"> quêtes </span>
-        <span class="feature-desc"> Ajouter les des quêtes pour vos jeus de rôles</span>
-      </a>
-
-    <a href="fiche_perso.html" class=feature-button feature-rules-shape">
-      <span class="feature-icon">🎶 </span>
-      <span class='feature-title"> Fiche personages Jeux de rôles </span>
-        <span class="feature-tilte"> fiche de personages pour jeux de rôles à compléter </span>
+      <nav class="sidebar-nav">
+        <span class="nav-label">Création</span>
+        <a href="carte.html" class="nav-item">
+          <span class="nav-icon">🃏</span>
+          <span>Cartes</span>
         </a>
-        
-  </div>
-</section>
+        <a href="Map.html" class="nav-item">
+          <span class="nav-icon">🎲</span>
+          <span>Plateau</span>
+        </a>
+        <a href="rules.html" class="nav-item">
+          <span class="nav-icon">📘</span>
+          <span>Règles</span>
+        </a>
+        <a href="token.html" class="nav-item">
+          <span class="nav-icon">🧩</span>
+          <span>Pions & Jetons</span>
+        </a>
+        <a href="sound.html" class="nav-item">
+          <span class="nav-icon">🎶</span>
+          <span>Bande Son</span>
+        </a>
 
-    
-      <section class="ad-banner ad-banner-mid" aria-label="Emplacement publicitaire">
-        <span>Emplacement publicitaire central</span>
-      </section>
+        <span class="nav-label" style="margin-top:16px;">Jeu de rôle</span>
+        <a href="quest.html" class="nav-item">
+          <span class="nav-icon">⚔️</span>
+          <span>Quêtes</span>
+        </a>
+        <a href="fiche_perso.html" class="nav-item">
+          <span class="nav-icon">🧙</span>
+          <span>Fiche Personnage</span>
+        </a>
+      </nav>
 
-      <section class="about-section card" id="aboutSection">
-        <div class="section-head">
-          <h3>À propos</h3>
-          <p>Un espace pensé pour rassurer, structurer et accélérer la création de jeux de plateau.</p>
+      <div class="sidebar-footer">
+        <a href="#aboutSection" class="nav-item">
+          <span class="nav-icon">ℹ️</span>
+          <span>À propos</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="main-area">
+
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 class="topbar-title">Studio de Jeux de Plateau</h1>
+          <p class="topbar-sub">Concevez cartes, plateaux, règles et prototypes depuis un seul espace.</p>
         </div>
-        <div class="about-grid">
-          <article>
-            <h4>Une approche claire</h4>
-            <p>
-              Le studio regroupe les grandes étapes de création d’un jeu :
-              cartes, plateau, règles, composants, tests et export.
-            </p>
-          </article>
-          <article>
-            <h4>Un cadre professionnel</h4>
-            <p>
-              L’interface met l’accent sur la lisibilité, la simplicité et la confiance,
-              pour donner une impression de logiciel sérieux dès l’arrivée sur le site.
-            </p>
-          </article>
-          <article>
-            <h4>Une base évolutive</h4>
-            <p>
-              Cette page d’accueil peut ensuite servir de point d’entrée vers chaque module,
-              chacun avec son propre HTML, son JS et son CSS.
-            </p>
-          </article>
+        <div class="topbar-right">
+          <div class="status-pill">
+            <span class="status-dot"></span>
+            Prêt à créer
+          </div>
         </div>
-      </section>
-    </main>
+      </header>
+
+      <main class="workspace">
+
+        <section class="hero-strip">
+          <div class="hero-text">
+            <span class="eyebrow">Studio en ligne</span>
+            <h2>Donnez vie à vos idées de jeu.</h2>
+            <p>Cartes, plateau, jetons, règles, bande son, quêtes — tout est ici, organisé et accessible.</p>
+          </div>
+          <div class="hero-stats">
+            <div class="stat-chip"><strong>7</strong><span>modules</span></div>
+            <div class="stat-chip"><strong>Print</strong><span>&amp; Play</span></div>
+            <div class="stat-chip"><strong>JdR</strong><span>inclus</span></div>
+          </div>
+        </section>
+
+        <section class="module-grid">
+          <h3 class="section-title">Modules principaux</h3>
+          <div class="cards-row">
+
+            <a href="carte.html" class="module-card mod-blue">
+              <div class="mod-icon">🃏</div>
+              <div class="mod-body">
+                <strong>Créateur de cartes</strong>
+                <p>Recto/verso, visuels, textes et statistiques.</p>
+              </div>
+              <span class="mod-arrow">→</span>
+            </a>
+
+            <a href="Map.html" class="module-card mod-teal">
+              <div class="mod-icon">🎲</div>
+              <div class="mod-body">
+                <strong>Éditeur de plateau</strong>
+                <p>Zones, tuiles, cases et éléments de jeu.</p>
+              </div>
+              <span class="mod-arrow">→</span>
+            </a>
+
+            <a href="rules.html" class="module-card mod-green">
+              <div class="mod-icon">📘</div>
+              <div class="mod-body">
+                <strong>Règles du jeu</strong>
+                <p>Rédigez et organisez votre livret de règles.</p>
+              </div>
+              <span class="mod-arrow">→</span>
+            </a>
+
+            <a href="token.html" class="module-card mod-amber">
+              <div class="mod-icon">🧩</div>
+              <div class="mod-body">
+                <strong>Pions &amp; jetons</strong>
+                <p>Créez les composants visuels du jeu.</p>
+              </div>
+              <span class="mod-arrow">→</span>
+            </a>
+
+            <a href="sound.html" class="module-card mod-purple">
+              <div class="mod-icon">🎶</div>
+              <div class="mod-body">
+                <strong>Bande Son</strong>
+                <p>Ajoutez vos liens audio pour l'ambiance sonore.</p>
+              </div>
+              <span class="mod-arrow">→</span>
+            </a>
+
+          </div>
+        </section>
+
+        <section class="module-grid">
+          <h3 class="section-title">Jeu de rôle</h3>
+          <div class="cards-row cards-row-jdr">
+
+            <a href="quest.html" class="module-card mod-coral">
+              <div class="mod-icon">⚔️</div>
+              <div class="mod-body">
+                <strong>Quêtes</strong>
+                <p>Créez et organisez les quêtes de vos jeux de rôle.</p>
+              </div>
+              <span class="mod-arrow">→</span>
+            </a>
+
+            <a href="fiche_perso.html" class="module-card mod-pink">
+              <div class="mod-icon">🧙</div>
+              <div class="mod-body">
+                <strong>Fiche Personnage</strong>
+                <p>Fiche complète à remplir pour vos personnages de JdR.</p>
+              </div>
+              <span class="mod-arrow">→</span>
+            </a>
+
+          </div>
+        </section>
+
+        <section class="about-section" id="aboutSection">
+          <h3 class="section-title">À propos</h3>
+          <div class="about-cards">
+            <article class="about-card">
+              <div class="about-icon">🎯</div>
+              <h4>Une approche claire</h4>
+              <p>Toutes les étapes de création regroupées : cartes, plateau, règles, composants, tests et export.</p>
+            </article>
+            <article class="about-card">
+              <div class="about-icon">💼</div>
+              <h4>Interface professionnelle</h4>
+              <p>Un outil sérieux et lisible, pensé pour être efficace dès la première utilisation.</p>
+            </article>
+            <article class="about-card">
+              <div class="about-icon">🚀</div>
+              <h4>Base évolutive</h4>
+              <p>Chaque module est indépendant et peut être enrichi selon vos besoins.</p>
+            </article>
+          </div>
+        </section>
+
+      </main>
+    </div>
   </div>
 
   <script src="main.js"></script>
