@@ -170,7 +170,87 @@
       <div class="modal-sidebar">
         <div class="modal-sidebar-title">Exporter la fiche</div>
         <button class="export-btn" onclick="exportPDF()"><span class="eb-icon">📄</span> Export PDF</button>
-        <button class="export-btn" onclick="exportWord()"><span class="eb-icon">📝</span> Export Word (.docx)</button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <button onclick="telechargerViaAPI()">
+    Télécharger via API GitHub
+</button>
+
+<script>
+    async function telechargerViaAPI() {
+        // Remplace par l'URL de l'API GitHub pour ton fichier
+        const apiUrl = "https://github.com/Patone2B/studio_Creation_Jeux_de_Plateau.git";
+
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            const downloadUrl = data.download_url;
+
+            // Crée un lien pour télécharger
+            const a = document.createElement("a");
+            a.href = downloadUrl;
+            a.download = "nom-du-fichier.ext";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error("Erreur lors du téléchargement :", error);
+            alert("Impossible de télécharger le fichier.");
+        }
+    }
+</script>
+
+
+
+        
         <button class="export-btn" onclick="exportJSON()"><span class="eb-icon">💾</span> Sauvegarder JSON</button>
         <button class="export-btn" onclick="document.getElementById('importFile').click()"><span class="eb-icon">📂</span> Importer JSON</button>
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
