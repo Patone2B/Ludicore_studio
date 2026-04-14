@@ -1,25 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const aboutLinks = document.querySelectorAll('a[href="#aboutSection"]');
   const aboutSection = document.getElementById('aboutSection');
-  const aboutBtn = document.getElementById('aboutBtn');
 
-  aboutBtn?.addEventListener('click', () => {
-    aboutSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  aboutLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      aboutSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   });
 
-  const buttons = [
-    'startProjectBtn',
-    'cardsBtn',
-    'boardBtn',
-    'rulesBtn',
-    'tokensBtn',
-  ];
-
-  buttons.forEach((id) => {
-    const element = document.getElementById(id);
-    if (!element) return;
-
-    element.addEventListener('click', () => {
-      console.log(`Action à connecter plus tard : ${id}`);
-    });
+  const navItems = document.querySelectorAll('.nav-item');
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  navItems.forEach(item => {
+    const href = item.getAttribute('href');
+    if (href && href === currentPage) {
+      item.style.background = 'rgba(255,255,255,0.12)';
+      item.style.color = 'white';
+    }
   });
 });
