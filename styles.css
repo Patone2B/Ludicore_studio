@@ -12,11 +12,13 @@ body.dark {
   --card: #1e293b;
 }
 
+/* GLOBAL */
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
   background: var(--bg);
   color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* SIDEBAR */
@@ -28,6 +30,13 @@ body {
   position: fixed;
   display: flex;
   flex-direction: column;
+  align-items: center;
+}
+
+.brand {
+  font-family: 'Outfit';
+  font-weight: 800;
+  padding: 20px;
 }
 
 .sidebar-nav {
@@ -38,21 +47,19 @@ body {
 }
 
 .nav-item {
-  padding: 10px 20px;
-  text-decoration: none;
-  color: rgba(255,255,255,0.8);
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .nav-item:hover {
   background: rgba(255,255,255,0.1);
+  transform: translateX(5px);
 }
 
 /* MAIN */
 .main-area {
   margin-left: 220px;
-}
-
-.workspace {
   padding: 40px;
 }
 
@@ -62,53 +69,99 @@ body {
   color: white;
   padding: 40px;
   border-radius: 12px;
+  position: relative;
+  overflow: hidden;
 }
 
-.hero-actions {
-  margin-top: 20px;
+/* effet lumière animé */
+.hero::before {
+  content: "";
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
+  top: -50px;
+  right: -50px;
+  animation: float 6s infinite ease-in-out;
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(15px); }
 }
 
 /* BUTTONS */
 .btn-primary {
   background: white;
   color: #3b6bff;
+  border: none;
   padding: 10px 20px;
-  text-decoration: none;
   border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
 }
 
 .btn-secondary {
   margin-left: 10px;
+  background: transparent;
   color: white;
+  border: 1px solid white;
+  padding: 10px;
+  border-radius: 8px;
 }
 
-/* ABOUT */
-.about {
-  margin-top: 40px;
+/* FADE IN */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* FAQ */
 .faq details {
   margin: 10px 0;
-  background: var(--card);
   padding: 10px;
+  background: var(--card);
   border-radius: 8px;
+  transition: transform 0.2s;
 }
 
-/* THEME BUTTON */
-.theme-btn {
-  margin: 20px;
-  padding: 10px;
-  border: none;
-  cursor: pointer;
-  border-radius: 8px;
+.faq details:hover {
+  transform: scale(1.02);
 }
 
 /* SIGNATURE */
 .signature {
   text-align: center;
-  padding: 20px;
-  font-family: 'Outfit', sans-serif;
+  margin-top: 50px;
   opacity: 0.6;
-  letter-spacing: 2px;
+  font-family: 'Outfit';
+}
+
+.signature span::after {
+  content: "";
+  display: block;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  margin: 5px auto;
+  transition: 0.4s;
+}
+
+.signature:hover span::after {
+  width: 60%;
 }
