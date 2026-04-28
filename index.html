@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Studio de Jeux de Plateau</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+  <!-- Fonts améliorées -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -20,186 +21,79 @@
 
       <nav class="sidebar-nav">
         <span class="nav-label">Création</span>
-        <a href="carte.html" class="nav-item">
-          <span class="nav-icon">🃏</span>
-          <span>Cartes</span>
-        </a>
-        <a href="Map.html" class="nav-item">
-          <span class="nav-icon">🎲</span>
-          <span>Plateau</span>
-        </a>
-        <a href="rules.html" class="nav-item">
-          <span class="nav-icon">📘</span>
-          <span>Règles</span>
-        </a>
-        <a href="token.html" class="nav-item">
-          <span class="nav-icon">🧩</span>
-          <span>Pions & Jetons</span>
-        </a>
-        <a href="sound.html" class="nav-item">
-          <span class="nav-icon">🎶</span>
-          <span>Bande Son</span>
-        </a>
+        <a href="carte.html" class="nav-item">🃏 Cartes</a>
+        <a href="Map.html" class="nav-item">🎲 Plateau</a>
+        <a href="rules.html" class="nav-item">📘 Règles</a>
+        <a href="token.html" class="nav-item">🧩 Pions</a>
+        <a href="sound.html" class="nav-item">🎶 Bande Son</a>
 
-        <span class="nav-label" style="margin-top:16px;">Jeu de rôle</span>
-        <a href="quest.html" class="nav-item">
-          <span class="nav-icon">⚔️</span>
-          <span>Quêtes</span>
-        </a>
-        <a href="fiche_perso.html" class="nav-item">
-          <span class="nav-icon">🧙</span>
-          <span>Fiche Personnage</span>
-        </a>
+        <span class="nav-label">JDR</span>
+        <a href="quest.html" class="nav-item">⚔️ Quêtes</a>
+        <a href="fiche_perso.html" class="nav-item">🧙 Personnage</a>
       </nav>
 
       <div class="sidebar-footer">
-        <a href="#aboutSection" class="nav-item">
-          <span class="nav-icon">ℹ️</span>
-          <span>À propos</span>
-        </a>
+        <button id="themeToggle" class="theme-btn">🌙 Mode sombre</button>
       </div>
     </aside>
 
     <div class="main-area">
 
       <header class="topbar">
-        <div class="topbar-left">
-          <h1 class="topbar-title">Studio de Jeux de Plateau</h1>
-          <p class="topbar-sub">Concevez cartes, plateaux, règles et prototypes depuis un seul espace.</p>
-        </div>
-        <div class="topbar-right">
-          <div class="status-pill">
-            <span class="status-dot"></span>
-            Prêt à créer
-          </div>
+        <div>
+          <h1>Studio de Jeux</h1>
+          <p>Créez vos jeux facilement</p>
         </div>
       </header>
 
       <main class="workspace">
 
-        <section class="hero-strip">
-          <div class="hero-text">
-            <span class="eyebrow">Studio en ligne</span>
-            <h2>Donnez vie à vos idées de jeu.</h2>
-            <p>Cartes, plateau, jetons, règles, bande son, quêtes — tout est ici, organisé et accessible.</p>
-          </div>
-          <div class="hero-stats">
-            <div class="stat-chip"><strong>7</strong><span>modules</span></div>
-            <div class="stat-chip"><strong>Print</strong><span>&amp; Play</span></div>
-            <div class="stat-chip"><strong>JdR</strong><span>inclus</span></div>
+        <!-- HERO -->
+        <section class="hero">
+          <h2>Donnez vie à vos idées</h2>
+          <p>Un studio complet pour créer vos jeux</p>
+
+          <div class="hero-actions">
+            <a href="carte.html" class="btn-primary">Commencer</a>
+            <a href="#about" class="btn-secondary">En savoir plus</a>
           </div>
         </section>
 
-        <section class="module-grid">
-          <h3 class="section-title">Modules principaux</h3>
-          <div class="cards-row">
-
-            <a href="carte.html" class="module-card mod-blue">
-              <div class="mod-icon">🃏</div>
-              <div class="mod-body">
-                <strong>Créateur de cartes</strong>
-                <p>Recto/verso, visuels, textes et statistiques.</p>
-              </div>
-              <span class="mod-arrow">→</span>
-            </a>
-
-            <a href="Map.html" class="module-card mod-teal">
-              <div class="mod-icon">🎲</div>
-              <div class="mod-body">
-                <strong>Éditeur de plateau</strong>
-                <p>Zones, tuiles, cases et éléments de jeu.</p>
-              </div>
-              <span class="mod-arrow">→</span>
-            </a>
-
-            <a href="rules.html" class="module-card mod-green">
-              <div class="mod-icon">📘</div>
-              <div class="mod-body">
-                <strong>Règles du jeu</strong>
-                <p>Rédigez et organisez votre livret de règles.</p>
-              </div>
-              <span class="mod-arrow">→</span>
-            </a>
-
-            <a href="token.html" class="module-card mod-amber">
-              <div class="mod-icon">🧩</div>
-              <div class="mod-body">
-                <strong>Pions &amp; jetons</strong>
-                <p>Créez les composants visuels du jeu.</p>
-              </div>
-              <span class="mod-arrow">→</span>
-            </a>
-
-            <a href="sound.html" class="module-card mod-purple">
-              <div class="mod-icon">🎶</div>
-              <div class="mod-body">
-                <strong>Bande Son</strong>
-                <p>Ajoutez vos liens audio pour l'ambiance sonore.</p>
-              </div>
-              <span class="mod-arrow">→</span>
-            </a>
-
-          </div>
+        <!-- À PROPOS -->
+        <section id="about" class="about">
+          <h3>À propos</h3>
+          <p>
+            Ce studio vous permet de créer rapidement des prototypes de jeux de société et de jeux de rôle.
+            Il est conçu pour être simple, rapide et efficace.
+          </p>
         </section>
 
-        <section class="module-grid">
-          <h3 class="section-title">Jeu de rôle</h3>
-          <div class="cards-row cards-row-jdr">
+        <!-- FAQ -->
+        <section class="faq">
+          <h3>FAQ</h3>
 
-            <a href="quest.html" class="module-card mod-coral">
-              <div class="mod-icon">⚔️</div>
-              <div class="mod-body">
-                <strong>Quêtes</strong>
-                <p>Créez et organisez les quêtes de vos jeux de rôle.</p>
-              </div>
-              <span class="mod-arrow">→</span>
-            </a>
+          <details>
+            <summary>À quoi sert ce studio ?</summary>
+            <p>Créer facilement des jeux, prototypes ou projets complets.</p>
+          </details>
 
-            <a href="fiche_perso.html" class="module-card mod-pink">
-              <div class="mod-icon">🧙</div>
-              <div class="mod-body">
-                <strong>Fiche Personnage</strong>
-                <p>Fiche complète à remplir pour vos personnages de JdR.</p>
-              </div>
-              <span class="mod-arrow">→</span>
-            </a>
+          <details>
+            <summary>Puis-je l’utiliser pour un projet sérieux ?</summary>
+            <p>Oui, il est conçu pour des projets personnels ou commerciaux.</p>
+          </details>
 
-          </div>
         </section>
 
-        <section class="about-section" id="aboutSection">
-          <h3 class="section-title">À propos</h3>
-          <div class="about-cards">
-            <article class="about-card">
-              <div class="about-icon">🎯</div>
-              <h4>Une approche claire</h4>
-              <p>Toutes les étapes de création regroupées : cartes, plateau, règles, composants, tests et export.</p>
-            </article>
-            <article class="about-card">
-              <div class="about-icon">💼</div>
-              <h4>Interface professionnelle</h4>
-              <p>Un outil sérieux et lisible, pensé pour être efficace dès la première utilisation.</p>
-            </article>
-            <article class="about-card">
-              <div class="about-icon">🚀</div>
-              <h4>Base évolutive</h4>
-              <p>Chaque module est indépendant et peut être enrichi selon vos besoins.</p>
-            </article>
-          </div>
-        </section>
-
-
-        <h2><strong>FAQ</strong></h2>
         <details>
-<summary> Sous quelle licence est ce logiciel ?  </summary>
-<p> Licence GPL (GNU General Public License)
-<br>
+          <summary>Ce logiciel est sous licence </summary>
+          <p>Licence GPL (GNU General Public License)
+
 Ce logiciel est distribué sous la licence GPL, une licence open source copyleft qui garantit les libertés suivantes :
-<br>
+
 Utilisation : Libre pour tout usage, y compris commercial.
 Modification : Vous pouvez adapter le code à vos besoins.
 Redistribution : Vous pouvez partager le logiciel, à condition que :
-<br>
+
 Le code source reste accessible (même pour les versions modifiées).
 Toute redistribution conserve la même licence GPL.
 Les mentions d’origine (auteur et nom du projet) soient préservées.
@@ -209,16 +103,16 @@ Les mentions d’origine (auteur et nom du projet) soient préservées.
 Impossible d’intégrer ce code dans un projet propriétaire/fermé sans publier son code source.
 Idéale pour les projets qui veulent protéger la liberté du logiciel sur le long terme.
 </p>
-      
-
+          
         </details>
 
-<details >
-<summary>À quoi sert ce logiciel ? </summary>
-  <p>Ce logiciel peut vous servir à créer tout ce dont vous avez besoin pour mettre en forme votre idée de jeu de société, mais aussi de noter vos idées pour des quêtes pour vos futurs jeux de rôle. Bref. Ce logiciel comporte plusieurs modules parmi ceux-ci : - Création de cartes de jeu, création de map, ou encore créer votre fiche perso. Ça peut être pour une esquisse, ou pourquoi pas, pour une utilisation commerciale.  </p>
-  
-</details>
       </main>
+
+      <!-- FOOTER SIGNATURE -->
+      <footer class="signature">
+        <span>— une autre dérivée —</span>
+      </footer>
+
     </div>
   </div>
 
