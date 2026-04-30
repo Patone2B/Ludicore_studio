@@ -5,8 +5,24 @@ document.addEventListener("DOMContentLoaded", () => {
   initRules();
   initLogic();
   initExport();
-  initMiniEditor();
+  initWriterPanel();
 });
+
+// =============================
+// OUTILS
+// =============================
+function escapeHTML(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function textToHTML(value) {
+  return escapeHTML(value).replace(/\n/g, "<br>");
+}
 
 // =============================
 // RÈGLES
@@ -26,17 +42,14 @@ function initRules() {
     const clone = template.content.cloneNode(true);
     const block = clone.querySelector(".rule-block");
 
-    // supprimer
     block.querySelector(".delete-rule").onclick = () => block.remove();
 
-    // monter
     block.querySelector(".move-up").onclick = () => {
       if (block.previousElementSibling) {
         container.insertBefore(block, block.previousElementSibling);
       }
     };
 
-    // descendre
     block.querySelector(".move-down").onclick = () => {
       if (block.nextElementSibling) {
         container.insertBefore(block.nextElementSibling, block);
@@ -54,33 +67,24 @@ function initLogic() {
   const flow = document.getElementById("logicFlow");
   const template = document.getElementById("logicBlockTemplate");
 
-  document.getElementById("addConditionBtn").onclick = () => {
-    addLogicBlock("condition");
-  };
-
-  document.getElementById("addActionBtn").onclick = () => {
-    addLogicBlock("action");
-  };
+  document.getElementById("addConditionBtn").onclick = () => addLogicBlock("condition");
+  document.getElementById("addActionBtn").onclick = () => addLogicBlock("action");
 
   function addLogicBlock(type) {
     const clone = template.content.cloneNode(true);
     const block = clone.querySelector(".logic-block");
 
     block.classList.add(type);
-    block.querySelector(".logic-type-badge").textContent =
-      type === "condition" ? "SI" : "ALORS";
+    block.querySelector(".logic-type-badge").textContent = type === "condition" ? "SI" : "ALORS";
 
-    // delete
     block.querySelector(".delete-logic").onclick = () => block.remove();
 
-    // move up
     block.querySelector(".move-up").onclick = () => {
       if (block.previousElementSibling) {
         flow.insertBefore(block, block.previousElementSibling);
       }
     };
 
-    // move down
     block.querySelector(".move-down").onclick = () => {
       if (block.nextElementSibling) {
         flow.insertBefore(block.nextElementSibling, block);
@@ -95,18 +99,35 @@ function initLogic() {
 // EXPORT PDF
 // =============================
 function initExport() {
-  document.getElementById("exportPdfBtn").onclick = () => {
+  const pdfBtn = document.getElementById("exportPdfBtn");
+  if (!pdfBtn) return;
+
+  pdfBtn.onclick = () => {
     const element = buildExportHTML();
+    const renderArea = document.getElementById("pdfRenderArea");
+
+    renderArea.innerHTML = "";
+    renderArea.appendChild(element);
 
     const opt = {
-      margin: 10,
+      margin: 12,
       filename: "regles-jeu.pdf",
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+      html2canvas: {
+        scale: 2,
+        backgroundColor: "#ffffff"
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["css", "legacy"] }
     };
 
-    html2pdf().set(opt).from(element).save();
+    html2pdf()
+      .set(opt)
+      .from(element)
+      .save()
+      .then(() => {
+        renderArea.innerHTML = "";
+      });
   };
 }
 
@@ -115,88 +136,157 @@ function initExport() {
 // =============================
 function buildExportHTML() {
   const container = document.createElement("div");
+  container.className = "pdf-document";
+  container.style.cssText = `
+    width: 190mm;
+    padding: 12mm;
+    background: #ffffff;
+    color: #111827;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+  `;
 
-  const title = document.getElementById("gameTitle").value;
-  const intro = document.getElementById("gameIntro").value;
+  const title = document.getElementById("gameTitle").value.trim() || "Règles du jeu";
+  const intro = document.getElementById("gameIntro").value.trim();
 
-  container.innerHTML += `<h1>${title}</h1>`;
-  container.innerHTML += `<p>${intro}</p>`;
+  container.innerHTML = `
+    <style>
+      .pdf-document, .pdf-document * {
+        color: #111827 !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+      }
+      .pdf-document h1 {
+        font-size: 28px;
+        margin: 0 0 12px;
+        border-bottom: 2px solid #111827;
+        padding-bottom: 8px;
+      }
+      .pdf-document h2 {
+        font-size: 20px;
+        margin: 24px 0 10px;
+        color: #0f172a !important;
+      }
+      .pdf-document h3 {
+        font-size: 16px;
+        margin: 14px 0 6px;
+      }
+      .pdf-document p {
+        margin: 0 0 10px;
+      }
+      .pdf-document .pdf-block {
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 10px;
+        margin: 10px 0;
+        page-break-inside: avoid;
+      }
+      .pdf-document .pdf-muted {
+        color: #374151 !important;
+      }
+    </style>
+    <h1>${escapeHTML(title)}</h1>
+    ${intro ? `<p class="pdf-muted">${textToHTML(intro)}</p>` : ""}
+  `;
 
-  ["setup", "turn", "victory"].forEach(sectionId => {
+  const sections = [
+    ["setup", "Mise en place"],
+    ["turn", "Tour de jeu"],
+    ["victory", "Victoire"]
+  ];
+
+  sections.forEach(([sectionId, label]) => {
     const list = document.getElementById(sectionId + "List");
-    container.innerHTML += `<h2>${sectionId.toUpperCase()}</h2>`;
+    container.innerHTML += `<h2>${label}</h2>`;
 
-    list.querySelectorAll(".rule-block").forEach(block => {
-      const t = block.querySelector(".rule-title").value;
-      const txt = block.querySelector(".rule-text").value;
+    const blocks = list.querySelectorAll(".rule-block");
+    if (!blocks.length) {
+      container.innerHTML += `<p class="pdf-muted">Aucune règle ajoutée.</p>`;
+      return;
+    }
 
-      container.innerHTML += `<h3>${t}</h3><p>${txt}</p>`;
+    blocks.forEach(block => {
+      const t = block.querySelector(".rule-title").value.trim() || "Bloc de règle";
+      const txt = block.querySelector(".rule-text").value.trim();
+      const card = block.querySelector(".rule-card-link").value.trim();
+      const board = block.querySelector(".rule-board-link").value.trim();
+
+      container.innerHTML += `
+        <div class="pdf-block">
+          <h3>${escapeHTML(t)}</h3>
+          ${txt ? `<p>${textToHTML(txt)}</p>` : ""}
+          ${card ? `<p><strong>Carte liée :</strong> ${escapeHTML(card)}</p>` : ""}
+          ${board ? `<p><strong>Plateau lié :</strong> ${escapeHTML(board)}</p>` : ""}
+        </div>
+      `;
     });
   });
 
-  // LOGIQUE
   const logic = document.getElementById("logicFlow");
-  container.innerHTML += `<h2>LOGIQUE</h2>`;
+  container.innerHTML += `<h2>Logique simple</h2>`;
 
-  logic.querySelectorAll(".logic-block").forEach(block => {
-    const txt = block.querySelector(".logic-text").value;
-    const detail = block.querySelector(".logic-detail").value;
+  const logicBlocks = logic.querySelectorAll(".logic-block");
+  if (!logicBlocks.length) {
+    container.innerHTML += `<p class="pdf-muted">Aucune logique ajoutée.</p>`;
+  } else {
+    logicBlocks.forEach(block => {
+      const type = block.classList.contains("condition") ? "SI" : "ALORS";
+      const txt = block.querySelector(".logic-text").value.trim();
+      const detail = block.querySelector(".logic-detail").value.trim();
 
-    container.innerHTML += `<p><strong>${txt}</strong> : ${detail}</p>`;
-  });
+      container.innerHTML += `
+        <div class="pdf-block">
+          <p><strong>${type}</strong> ${escapeHTML(txt || "Bloc logique")}</p>
+          ${detail ? `<p>${textToHTML(detail)}</p>` : ""}
+        </div>
+      `;
+    });
+  }
 
-  // NOTES (mini éditeur)
-  const notes = document.getElementById("miniEditorContent");
-  if (notes) {
-    container.innerHTML += `<h2>NOTES</h2>`;
-    container.innerHTML += `<div>${notes.innerHTML}</div>`;
+  const writerPanel = document.getElementById("writerPanel");
+  const notes = document.getElementById("writerEditor");
+  if (writerPanel && notes && !writerPanel.hidden && notes.innerText.trim()) {
+    container.innerHTML += `<h2>Notes de rédaction</h2><div class="pdf-block">${notes.innerHTML}</div>`;
   }
 
   return container;
 }
 
 // =============================
-// MINI ÉDITEUR (type Word)
+// ÉDITEUR DE NOTES INTÉGRÉ
 // =============================
-function initMiniEditor() {
-  const btn = document.createElement("button");
-  btn.textContent = "Ouvrir l’éditeur de notes";
-  btn.className = "btn btn-secondary";
-  btn.style.margin = "20px";
-  document.body.appendChild(btn);
+function initWriterPanel() {
+  const toggleBtn = document.getElementById("toggleWriterBtn");
+  const writerPanel = document.getElementById("writerPanel");
+  const editor = document.getElementById("writerEditor");
 
-  const editor = document.createElement("div");
-  editor.style.display = "none";
-  editor.innerHTML = `
-    <div style="background:#111;padding:10px;border-top:1px solid #333;">
-      <div id="toolbar">
-        <button onclick="exec('bold')">B</button>
-        <button onclick="exec('italic')">I</button>
-        <button onclick="exec('underline')">U</button>
-        <button onclick="exec('insertUnorderedList')">•</button>
-        <button onclick="exec('justifyLeft')">⬅</button>
-        <button onclick="exec('justifyCenter')">⬍</button>
-        <button onclick="exec('justifyRight')">➡</button>
-        <button onclick="exec('undo')">↶</button>
-        <button onclick="exec('redo')">↷</button>
-        <button onclick="exec('removeFormat')">✖</button>
-      </div>
-      <div id="miniEditorContent" contenteditable="true"
-        style="min-height:200px;background:#fff;color:#000;padding:10px;">
-      </div>
-    </div>
-  `;
+  if (!toggleBtn || !writerPanel || !editor) return;
 
-  document.body.appendChild(editor);
+  toggleBtn.addEventListener("click", () => {
+    writerPanel.hidden = !writerPanel.hidden;
+    toggleBtn.setAttribute("aria-expanded", String(!writerPanel.hidden));
+    toggleBtn.textContent = writerPanel.hidden ? "Ouvrir l’éditeur de notes" : "Fermer l’éditeur de notes";
+  });
 
-  btn.onclick = () => {
-    editor.style.display = editor.style.display === "none" ? "block" : "none";
-  };
-}
+  document.querySelectorAll(".mini-tool[data-cmd]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      editor.focus();
+      document.execCommand(btn.dataset.cmd, false, null);
+    });
+  });
 
-// =============================
-// COMMANDES ÉDITEUR
-// =============================
-function exec(cmd) {
-  document.execCommand(cmd, false, null);
+  document.querySelectorAll(".mini-tool[data-block]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      editor.focus();
+      document.execCommand("formatBlock", false, btn.dataset.block);
+    });
+  });
+
+  const undoBtn = document.getElementById("undoWriterBtn");
+  const redoBtn = document.getElementById("redoWriterBtn");
+  const clearBtn = document.getElementById("clearWriterBtn");
+
+  if (undoBtn) undoBtn.onclick = () => document.execCommand("undo", false, null);
+  if (redoBtn) redoBtn.onclick = () => document.execCommand("redo", false, null);
+  if (clearBtn) clearBtn.onclick = () => document.execCommand("removeFormat", false, null);
 }
