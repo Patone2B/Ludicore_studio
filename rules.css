@@ -322,9 +322,6 @@ textarea:focus {
   background: #162033;
 }
 
-.export-panel textarea {
-  min-height: 320px;
-}
 
 .empty-state {
   color: var(--muted);
@@ -347,4 +344,59 @@ textarea:focus {
   .topbar {
     flex-direction: column;
   }
+}
+.btn-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0b1220;
+  color: var(--text);
+  border: 1px solid #334155;
+  text-decoration: none;
+}
+
+.btn-menu:hover {
+  background: #162033;
+  transform: translateY(-1px);
+}
+
+.writer-panel {
+  margin-top: 18px;
+}
+
+.writer-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mini-tool {
+  min-height: 34px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.writer-editor {
+  min-height: 260px;
+  padding: 16px;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  outline: none;
+  line-height: 1.55;
+}
+
+.writer-editor:focus {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.pdf-render-area {
+  position: fixed;
+  left: -99999px;
+  top: 0;
+  width: 190mm;
+  background: #ffffff;
+  color: #111827;
 }
