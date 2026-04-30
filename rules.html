@@ -15,10 +15,10 @@
       </div>
 
       <div class="topbar-actions">
-        <button id="exportBtn" class="btn btn-primary">Exporter les règles</button>
         <button id="exportPdfBtn" class="btn btn-secondary">Exporter PDF</button>
         <button id="toggleWriterBtn" class="btn btn-secondary" aria-expanded="false">Ouvrir l’éditeur de notes</button>
         <button id="resetBtn" class="btn btn-secondary">Réinitialiser</button>
+        <a href="index.html" class="btn btn-menu">← Menu principal</a>
       </div>
     </header>
 
@@ -87,14 +87,6 @@
         <div id="logicFlow" class="logic-flow"></div>
       </section>
     </main>
-
-    <section class="panel export-panel">
-      <div class="panel-header">
-        <h2>Export lisible</h2>
-        <button id="copyExportBtn" class="btn btn-secondary">Copier le texte</button>
-      </div>
-      <textarea id="exportOutput" rows="18" readonly placeholder="L’export apparaîtra ici..."></textarea>
-    </section>
 
     <section id="writerPanel" class="panel writer-panel" hidden>
       <div class="panel-header">
