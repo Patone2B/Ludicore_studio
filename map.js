@@ -166,6 +166,23 @@ function clearSelection() {
 
 function selectNode(node) {
   selectedNode = node;
+
+  if (node && node.getAttr("tileMeta")) {
+    forceTileToOneGridCell(node);
+    transformer.enabledAnchors([]);
+  } else {
+    transformer.enabledAnchors([
+      "top-left",
+      "top-center",
+      "top-right",
+      "middle-left",
+      "middle-right",
+      "bottom-left",
+      "bottom-center",
+      "bottom-right"
+    ]);
+  }
+
   transformer.nodes([node]);
   updateSelectionPanel();
   uiLayer.draw();
@@ -197,8 +214,40 @@ function snapNodeToGrid(node) {
   node.y(applySnap(node.y()));
 }
 
+function forceTileToOneGridCell(node) {
+  if (!(node instanceof Konva.Image)) return;
+  if (!node.getAttr("tileMeta")) return;
+
+  const size = getGridSize();
+  node.width(size);
+  node.height(size);
+  node.scale({ x: 1, y: 1 });
+}
+
+function resizeAllTilesToGridCell() {
+  Object.values(layersMap).forEach((layer) => {
+    layer.find("Image").forEach((node) => {
+      if (!node.getAttr("tileMeta")) return;
+      forceTileToOneGridCell(node);
+      snapNodeToGrid(node);
+    });
+    layer.draw();
+  });
+
+  if (selectedNode) {
+    transformer.forceUpdate();
+    uiLayer.draw();
+  }
+}
+
 function normalizeImageScale(node) {
   if (!(node instanceof Konva.Image)) return;
+
+  if (node.getAttr("tileMeta")) {
+    forceTileToOneGridCell(node);
+    return;
+  }
+
   const nextWidth = Math.max(8, node.width() * node.scaleX());
   const nextHeight = Math.max(8, node.height() * node.scaleY());
   node.width(nextWidth);
@@ -415,12 +464,14 @@ function sliceTileset() {
 function createTileInstance(tile, x, y, layerKey = activeLayerKey) {
   if (!activeTilesetImage || !tile) return null;
 
+  const gridSize = getGridSize();
+
   const node = new Konva.Image({
     image: activeTilesetImage,
     x,
     y,
-    width: tile.width,
-    height: tile.height,
+    width: gridSize,
+    height: gridSize,
     crop: {
       x: tile.cropX,
       y: tile.cropY,
@@ -456,8 +507,7 @@ function duplicateSelected() {
   );
 
   if (!node) return;
-  node.width(selectedNode.width());
-  node.height(selectedNode.height());
+  forceTileToOneGridCell(node);
   node.setAttr("assetName", `${selectedNode.getAttr("assetName") || "Tuile"} copie`);
   selectNode(node);
 }
@@ -611,8 +661,8 @@ window.addEventListener("keyup", (e) => {
   }
 });
 
-bindIfExists(applyGridBtn, "click", drawGrid);
-bindIfExists(gridSizeInput, "input", () => { updateGridSizeLabel(); drawGrid(); });
+bindIfExists(applyGridBtn, "click", () => { drawGrid(); resizeAllTilesToGridCell(); });
+bindIfExists(gridSizeInput, "input", () => { updateGridSizeLabel(); drawGrid(); resizeAllTilesToGridCell(); });
 bindIfExists(showGridInput, "change", drawGrid);
 bindIfExists(gridTypeInput, "change", drawGrid);
 
