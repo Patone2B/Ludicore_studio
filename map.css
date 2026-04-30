@@ -352,3 +352,14 @@ select:focus {
   .button-row, .tool-row, .status-pills, .grid-2 { grid-template-columns: 1fr; flex-direction: column; }
   .btn { width: 100%; }
 }
+.btn-retour {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  padding: 10px 14px;
+  background: #222;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  z-index: 9999;
+}
