@@ -119,3 +119,43 @@ input[type="range"] { width:100%; }
 @media print {
   .export-host { position: static; left: 0; }
 }
+
+
+/* Optimisations Ludicore Studio */
+body { overflow: auto; }
+.screen { min-height: 100svh; }
+#editorScreen.active { display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+#editorScreen .topbar { flex: 0 0 auto; }
+#editorScreen .editor-layout { flex: 1 1 auto; min-height: 0; height: auto; }
+#editorScreen .sidebar { max-height: calc(100svh - 112px); }
+#editorScreen .workspace { min-height: 0; }
+#editorScreen .canvas-wrap { min-height: 0; max-height: calc(100svh - 190px); overscroll-behavior: contain; }
+.card-stage { transform-origin: center center; transition: transform .18s ease; }
+.card-counter { display:inline-flex; align-items:center; min-height:34px; padding:8px 12px; border-radius:999px; background:rgba(119,168,255,.14); color:#dce8ff; font-weight:800; font-size:13px; border:1px solid rgba(119,168,255,.22); }
+.save-status { display:inline-flex; align-items:center; min-height:34px; padding:8px 12px; border-radius:999px; font-weight:900; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.06); }
+.save-status::before { content:''; width:8px; height:8px; border-radius:50%; margin-right:8px; background:currentColor; }
+.save-status.is-dirty { color:#251300 !important; background:linear-gradient(135deg,#ffd36b,#ff8c42); box-shadow:0 0 0 3px rgba(255,179,64,.18), 0 10px 30px rgba(255,140,66,.18); }
+.save-status.is-saved { color:var(--ok) !important; background:rgba(119,214,160,.12); }
+.save-status.is-error { color:var(--danger) !important; background:rgba(255,109,125,.14); }
+.backBtn, .secondary-btn, button[classe] { background: rgba(255,255,255,0.12); color:white; border-radius:14px; padding:12px 16px; border:0; cursor:pointer; }
+.template-grid { grid-template-columns: repeat(3, 1fr); }
+.theme-parchment { background: radial-gradient(circle at 50% 15%, #fff0bc, #d39b51 45%, #6f4327); color:#32180a; }
+.theme-noir { background: linear-gradient(135deg, #050505, #1c1c22 52%, #d6b25e); color:#f5ebcc; }
+.theme-runes { background: radial-gradient(circle, rgba(136,255,218,.45), transparent 28%), linear-gradient(135deg,#102a2e,#214d5f,#0b1219); }
+.card-canvas.card-style-parchment { background-image: radial-gradient(circle at 25% 20%, rgba(255,255,255,.18), transparent 16%), linear-gradient(45deg, rgba(89,52,20,.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(89,52,20,.08) 25%, transparent 25%) !important; background-size: auto, 30px 30px, 30px 30px; }
+.card-canvas.card-style-noir { box-shadow: inset 0 0 0 8px rgba(214,178,94,.55), inset 0 0 42px rgba(0,0,0,.82), 0 30px 80px rgba(0,0,0,.4); }
+.card-canvas.card-style-runes::before { content:'✦ ✧ ✹ ✦ ✧ ✹ ✦'; position:absolute; inset:16px 16px auto; text-align:center; color:rgba(179,255,235,.35); letter-spacing:.35em; pointer-events:none; z-index:999; }
+@media (max-width: 1280px) { #editorScreen .sidebar { max-height: none; } #editorScreen.active { overflow:auto; } #editorScreen .canvas-wrap { max-height:none; } }
+@media (max-width: 900px) { #editorScreen.active { display:block; } .template-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.card-model-grid { grid-template-columns: repeat(2, 1fr); }
+.card-model-btn { min-height: 46px; white-space: normal; }
+.home-btn{
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  border:1px solid rgba(255,255,255,0.12);
+  font-weight:600;
+}
+.home-btn:hover{
+  background: linear-gradient(135deg,var(--accent),var(--accent-2));
+}
