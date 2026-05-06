@@ -311,3 +311,35 @@ canvas.select-mode.dragging { cursor: grabbing; }
 #objectList option { padding: 6px 8px; }
 .three-viewport { display: flex; }
 .three-viewport > canvas { border-radius: 16px; }
+
+
+/* Stabilisation demandée : uniquement pour l’éditeur 3D */
+#editor3d.active { min-height: calc(100svh - 150px); }
+#editor3d .editor-layout { height: calc(100svh - 170px); min-height: 720px; align-items: stretch; }
+#editor3d .side-column { max-height: 100%; overflow: auto; padding-right: 4px; }
+#editor3d .center-workspace { min-height: 0; align-items: stretch; }
+#editor3d .workspace-card-3d { min-height: 0; height: 100%; display: flex; flex-direction: column; }
+#editor3d .three-viewport { flex: 1 1 auto; min-height: 0; height: auto; }
+#editor3d .three-placeholder { min-height: 100%; }
+@media (max-width: 1320px) {
+  #editor3d .editor-layout { height: auto; min-height: 0; }
+  #editor3d .side-column { max-height: none; overflow: visible; }
+  #editor3d .three-viewport { min-height: 560px; }
+}
+.home-btn{
+  position:absolute;
+  top:20px;
+  right:20px;
+  padding:8px 14px;
+  border-radius:999px;
+  font-size:0.8rem;
+  background:rgba(15,23,42,0.9);
+  border:1px solid var(--border);
+  color:#cbd5e1;
+  text-decoration:none;
+  transition:0.2s;
+}
+.home-btn:hover{
+  background:linear-gradient(135deg,#7c3aed,#4f46e5);
+  color:white;
+}
