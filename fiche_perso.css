@@ -798,3 +798,20 @@ body::before {
   .inventory-grid { grid-template-columns: repeat(2, 1fr); }
   .vitals-row { grid-template-columns: 1fr; }
 }
+.home-btn{
+  display:inline-block;
+  margin-top:10px;
+  padding:6px 16px;
+  border:1px solid var(--gold);
+  color:var(--gold);
+  text-decoration:none;
+  font-family:'Cinzel',serif;
+  font-size:0.8rem;
+  letter-spacing:0.08em;
+  background:rgba(201,150,58,0.08);
+  transition:0.2s;
+}
+.home-btn:hover{
+  background:var(--gold);
+  color:#1a0f00;
+}
