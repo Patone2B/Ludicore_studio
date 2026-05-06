@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Deck Studio Local</title>
+  <title>Ludicore Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@400;600;700&family=Orbitron:wght@400;700&family=Playfair+Display:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
     <section id="startScreen" class="screen active">
       <div class="hero-card glass">
         <div class="hero-text">
-          <span class="eyebrow">Deck Studio Local</span>
+          <span class="eyebrow">Ludicore Studio</span>
           <h1>Crée, édite et exporte tes cartes en local</h1>
           <p>Images locales, texte, formes, recto/verso, export JSON, PNG, JPEG et PDF. Sauvegarde navigateur améliorée avec option de désactivation par deck.</p>
           <div class="hero-actions">
@@ -24,7 +24,7 @@
               <input type="file" id="importDeckInput" accept="application/json,.json" hidden>
             </label>
             <button id="aboutBtn" class="btn ghost">À propos</button>
-              <button classe="secondary-btn" id="backBtn">← Retour</button>
+            <a href="index.html" class="btn ghost home-btn">← Accueil</a>
           </div>
         </div>
         <div class="hero-preview">
@@ -48,7 +48,8 @@
         <div class="brand-line">
           <button id="backToHomeBtn" class="btn ghost">Accueil</button>
           <input id="deckNameInput" class="deck-name-input" type="text" value="Mon deck" maxlength="80">
-          <span id="saveStatus" class="save-status">Sauvegardé</span>
+          <span id="saveStatus" class="save-status is-saved">Sauvegardé</span>
+          <span id="cardCounter" class="card-counter">1 carte</span>
         </div>
         <div class="topbar-actions">
           <label class="check-row save-toggle-row"><input type="checkbox" id="persistDeckToggle" checked> Sauvegarde navigateur</label>
@@ -105,6 +106,18 @@
 
           <div class="panel">
             <div class="panel-header">
+              <h3>Types de carte</h3>
+            </div>
+            <div class="template-grid card-model-grid">
+              <button class="btn tiny secondary card-model-btn" data-model="character">Personnage</button>
+              <button class="btn tiny secondary card-model-btn" data-model="boss">Boss</button>
+              <button class="btn tiny secondary card-model-btn" data-model="item">Objet</button>
+              <button class="btn tiny secondary card-model-btn" data-model="spell">Sort</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
               <h3>Modèles</h3>
             </div>
             <div class="template-grid">
@@ -114,6 +127,9 @@
               <button class="template-btn theme-ember" data-theme="ember">Ember</button>
               <button class="template-btn theme-ocean" data-theme="ocean">Océan</button>
               <button class="template-btn theme-minimal" data-theme="minimal">Minimal</button>
+              <button class="template-btn theme-parchment" data-theme="parchment">Parchemin</button>
+              <button class="template-btn theme-noir" data-theme="noir">Noir</button>
+              <button class="template-btn theme-runes" data-theme="runes">Runes</button>
             </div>
           </div>
         </aside>
@@ -126,6 +142,7 @@
             <button id="centerElementBtn" class="btn tiny ghost">Centrer élément</button>
             <button id="bringFrontBtn" class="btn tiny ghost">Premier plan</button>
             <button id="sendBackBtn" class="btn tiny ghost">Arrière-plan</button>
+            <button id="fitViewBtn" class="btn tiny ghost">Vue rentrée</button>
             <button id="duplicateElementBtn" class="btn tiny ghost">Dupliquer élément</button>
             <button id="deleteElementBtn" class="btn tiny danger">Suppr élément</button>
           </div>
@@ -142,6 +159,7 @@
             <div class="panel-header">
               <h3>Carte</h3>
             </div>
+            <label>Nom de la carte <input type="text" id="cardNameInput" maxlength="80" placeholder="Nom de la carte"></label>
             <label>Largeur <input type="number" id="cardWidthInput" min="200" max="1200" step="10"></label>
             <label>Hauteur <input type="number" id="cardHeightInput" min="200" max="1600" step="10"></label>
             <label>Fond <input type="color" id="cardBgInput"></label>
