@@ -447,3 +447,20 @@ textarea {
     min-height: 220px;
   }
 }
+.home-btn{
+  display:inline-block;
+  margin-bottom:16px;
+  padding:10px 16px;
+  border-radius:12px;
+  background:rgba(0,0,0,0.4);
+  border:1px solid rgba(227,195,122,0.3);
+  color:var(--gold-strong);
+  text-decoration:none;
+  font-family:"Cinzel",serif;
+  letter-spacing:0.05em;
+  transition:0.2s;
+}
+.home-btn:hover{
+  background:linear-gradient(180deg,#7a5a2f,#5f431f);
+  color:white;
+}
