@@ -11,6 +11,9 @@ let history = [];
 let historyIndex = -1;
 let dragState = null;
 let dbPromise = null;
+let autoSaveTimer = null;
+let renderQueued = false;
+const AUTO_SAVE_DELAY = 1800;
 
 const els = {};
 
@@ -30,8 +33,8 @@ async function init() {
 
 function bindElements() {
   [
-    'startScreen','editorScreen','savedDecks','aboutModal','deckNameInput','saveStatus','cardsList','layersList','cardCanvas','canvasWrap',
-    'cardWidthInput','cardHeightInput','cardBgInput','cardBgOpacityInput','cardBackgroundImageInput','selectionControls','selectionEmpty',
+    'startScreen','editorScreen','savedDecks','aboutModal','deckNameInput','saveStatus','cardCounter','cardsList','layersList','cardCanvas','canvasWrap','cardStage',
+    'cardNameInput','cardWidthInput','cardHeightInput','cardBgInput','cardBgOpacityInput','cardBackgroundImageInput','selectionControls','selectionEmpty',
     'elementNameInput','elementXInput','elementYInput','elementWidthInput','elementHeightInput','elementRotationInput','elementOpacityInput',
     'elementColorInput','elementBorderColorInput','elementBorderWidthInput','elementRadiusInput','elementFontSizeInput','elementFontFamilyInput',
     'elementTextInput','persistDeckToggle','persistDeckToggleMirror'
@@ -55,6 +58,7 @@ function bindEvents() {
   byId('undoBtn').addEventListener('click', undo);
   byId('redoBtn').addEventListener('click', redo);
   byId('centerElementBtn').addEventListener('click', centerSelectedElement);
+  byId('fitViewBtn')?.addEventListener('click', fitCardToView);
   byId('bringFrontBtn').addEventListener('click', () => reorderSelected('front'));
   byId('sendBackBtn').addEventListener('click', () => reorderSelected('back'));
   byId('duplicateElementBtn').addEventListener('click', duplicateSelectedElement);
@@ -75,7 +79,9 @@ function bindEvents() {
 
   document.querySelectorAll('[data-add]').forEach(btn => btn.addEventListener('click', () => addElement(btn.dataset.add)));
   document.querySelectorAll('.template-btn').forEach(btn => btn.addEventListener('click', () => applyTheme(btn.dataset.theme)));
+  document.querySelectorAll('[data-model]').forEach(btn => btn.addEventListener('click', () => applyCardModel(btn.dataset.model)));
 
+  byId('cardNameInput').addEventListener('input', updateCardName);
   ['cardWidthInput','cardHeightInput'].forEach(id => byId(id).addEventListener('input', updateCardDimensions));
   byId('cardBgInput').addEventListener('input', updateCardBackground);
   byId('cardBgOpacityInput').addEventListener('input', updateCardBackground);
@@ -126,7 +132,7 @@ function createCard(index) {
 }
 
 function createSide(bgColor) {
-  return { background: { color: bgColor, opacity: 1, image: null }, elements: [] };
+  return { background: { color: bgColor, opacity: 1, image: null, style: 'plain' }, elements: [] };
 }
 
 function uid() { return Math.random().toString(36).slice(2, 10); }
@@ -160,6 +166,7 @@ function renderAll() {
   renderCardControls();
   updateSideButtons();
   syncPersistToggles();
+  updateCardCounter();
 }
 
 function renderCardsList() {
@@ -186,6 +193,8 @@ function renderCanvas() {
   canvas.style.backgroundImage = bg.image ? `url(${bg.image})` : 'none';
   canvas.style.backgroundSize = bg.image ? 'cover' : 'initial';
   canvas.style.backgroundPosition = 'center';
+  canvas.classList.remove('card-style-parchment','card-style-noir','card-style-runes');
+  if (bg.style && bg.style !== 'plain') canvas.classList.add(`card-style-${bg.style}`);
 
   side.elements.forEach((el, index) => {
     const node = document.createElement('div');
@@ -271,6 +280,7 @@ function renderLayers() {
 function renderCardControls() {
   const card = getCurrentCard();
   const bg = getCurrentSide().background;
+  els.cardNameInput.value = card.name || '';
   els.cardWidthInput.value = card.width;
   els.cardHeightInput.value = card.height;
   els.cardBgInput.value = bg.color || '#ffffff';
@@ -318,7 +328,7 @@ function onPersistToggleChange(e) {
     deleteDeck(state.id, { silent: true });
     localStorage.removeItem(CURRENT_KEY);
     els.saveStatus.textContent = 'Sauvegarde navigateur désactivée';
-    els.saveStatus.style.color = '#ffb86b';
+    els.saveStatus.classList.add('is-dirty');
   } else {
     autoSave();
   }
@@ -485,6 +495,18 @@ function onPointerUp() {
   pushHistory();
 }
 
+function updateCardCounter() {
+  if (!els.cardCounter) return;
+  const count = state.cards?.length || 0;
+  els.cardCounter.textContent = `${count} carte${count > 1 ? 's' : ''}`;
+}
+
+function updateCardName() {
+  const card = getCurrentCard();
+  card.name = els.cardNameInput.value || 'Carte sans nom';
+  touch();
+}
+
 function updateCardDimensions() {
   const card = getCurrentCard();
   card.width = +els.cardWidthInput.value;
@@ -600,8 +622,10 @@ function touch(push = true) {
   if (push) pushHistory();
 }
 function markDirty(saved = false, message) {
-  els.saveStatus.textContent = message || (saved ? 'Sauvegardé' : 'Modifications non enregistrées');
-  els.saveStatus.style.color = saved ? 'var(--ok)' : '#ffd479';
+  els.saveStatus.textContent = message || (saved ? 'Sauvegardé' : 'NON SAUVEGARDÉ');
+  els.saveStatus.classList.toggle('is-saved', !!saved);
+  els.saveStatus.classList.toggle('is-dirty', !saved);
+  els.saveStatus.classList.remove('is-error');
 }
 async function saveCurrentDeck({ notify = false } = {}) {
   state.updatedAt = new Date().toISOString();
@@ -612,7 +636,7 @@ async function saveCurrentDeck({ notify = false } = {}) {
       localStorage.removeItem(CURRENT_KEY);
       if (notify) {
         els.saveStatus.textContent = 'Deck non conservé dans le navigateur';
-        els.saveStatus.style.color = '#ffb86b';
+        els.saveStatus.classList.add('is-dirty');
       }
       await renderSavedDecks();
       return true;
@@ -622,20 +646,35 @@ async function saveCurrentDeck({ notify = false } = {}) {
     if (notify) markDirty(true);
     else {
       els.saveStatus.textContent = 'Sauvegarde auto';
-      els.saveStatus.style.color = 'var(--ok)';
+      els.saveStatus.classList.add('is-saved');
+      els.saveStatus.classList.remove('is-dirty', 'is-error');
     }
     await renderSavedDecks();
     return true;
   } catch (error) {
     console.error(error);
     els.saveStatus.textContent = 'Échec de sauvegarde';
-    els.saveStatus.style.color = 'var(--danger)';
+    els.saveStatus.classList.add('is-error');
+    els.saveStatus.classList.remove('is-saved');
     if (notify) alert('La sauvegarde navigateur a échoué. Le JSON reste disponible pour exporter le deck.');
     return false;
   }
 }
 function autoSave() {
-  saveCurrentDeck({ notify: false });
+  if (state.persistLocal === false) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => saveCurrentDeck({ notify: false }), AUTO_SAVE_DELAY);
+}
+
+function fitCardToView() {
+  const stage = els.cardStage || byId('cardStage');
+  const wrap = els.canvasWrap;
+  const card = getCurrentCard();
+  if (!stage || !wrap || !card) return;
+  const availableW = Math.max(240, wrap.clientWidth - 56);
+  const availableH = Math.max(240, wrap.clientHeight - 56);
+  const scale = Math.min(1, availableW / card.width, availableH / card.height);
+  stage.style.transform = `scale(${Math.max(0.45, scale)})`;
 }
 async function getAllDecks() {
   const decks = await dbGetAllDecks();
@@ -813,21 +852,47 @@ function importJSON(e) {
   });
 }
 
+function applyCardModel(model) {
+  const card = getCurrentCard();
+  const side = getCurrentSide();
+  const presets = {
+    character: { title: 'Nom du personnage', subtitle: 'Classe / rôle', footer: 'PV 10  •  ATQ 3  •  DEF 2', color: '#77a8ff' },
+    boss: { title: 'Boss légendaire', subtitle: 'Capacité spéciale', footer: 'PV 30  •  ATQ 8  •  Rage', color: '#ff6d7d' },
+    item: { title: 'Objet rare', subtitle: 'Effet immédiat ou équipement', footer: 'Coût 2  •  Usage unique', color: '#f2d28a' },
+    spell: { title: 'Sort', subtitle: 'Description de l’effet magique', footer: 'Mana 3  •  Portée 2', color: '#a66cff' },
+  };
+  const preset = presets[model] || presets.character;
+  side.elements = side.elements.filter(el => !el.generatedModel);
+  side.elements.push({ ...baseElement('text'), generatedModel: true, name: 'Titre modèle', text: preset.title, x: 34, y: 34, width: card.width - 68, height: 58, fontSize: 30, fontFamily: model === 'spell' ? 'Cinzel' : 'Inter', color: preset.color, textAlign: 'center', fontWeight: '700' });
+  side.elements.push({ ...baseElement('frame'), generatedModel: true, name: 'Cadre illustration', x: 40, y: 112, width: card.width - 80, height: Math.round(card.height * .42), color: 'transparent', borderColor: preset.color, borderWidth: 4, radius: 22 });
+  side.elements.push({ ...baseElement('text'), generatedModel: true, name: 'Texte modèle', text: preset.subtitle, x: 44, y: Math.round(card.height * .61), width: card.width - 88, height: 110, fontSize: 22, fontFamily: 'Inter', color: '#f8fbff', textAlign: 'center' });
+  side.elements.push({ ...baseElement('text'), generatedModel: true, name: 'Stats modèle', text: preset.footer, x: 34, y: card.height - 82, width: card.width - 68, height: 42, fontSize: 18, fontFamily: 'Inter', color: preset.color, textAlign: 'center', fontWeight: '700' });
+  normalizeZIndices();
+  touch();
+}
+
 function applyTheme(theme) {
   const side = getCurrentSide();
   const map = {
-    classic: { color: '#1f120b', opacity: 1, image: null, accents: ['#e6c282','#6b4625'] },
-    neon: { color: '#071326', opacity: 1, image: null, accents: ['#4cc9f0','#d946ef'] },
-    mystic: { color: '#22153e', opacity: 1, image: null, accents: ['#b794f4','#f0abfc'] },
-    ember: { color: '#2f110d', opacity: 1, image: null, accents: ['#fb923c','#facc15'] },
-    ocean: { color: '#0b2942', opacity: 1, image: null, accents: ['#67e8f9','#22c55e'] },
-    minimal: { color: '#f3f5f8', opacity: 1, image: null, accents: ['#d1d5db','#111827'] },
+    classic: { color: '#1f120b', opacity: 1, image: null, style: 'plain', accents: ['#e6c282','#6b4625'] },
+    neon: { color: '#071326', opacity: 1, image: null, style: 'plain', accents: ['#4cc9f0','#d946ef'] },
+    mystic: { color: '#22153e', opacity: 1, image: null, style: 'plain', accents: ['#b794f4','#f0abfc'] },
+    ember: { color: '#2f110d', opacity: 1, image: null, style: 'plain', accents: ['#fb923c','#facc15'] },
+    ocean: { color: '#0b2942', opacity: 1, image: null, style: 'plain', accents: ['#67e8f9','#22c55e'] },
+    minimal: { color: '#f3f5f8', opacity: 1, image: null, style: 'plain', accents: ['#d1d5db','#111827'] },
+    parchment: { color: '#c99252', opacity: 1, image: null, style: 'parchment', accents: ['#4b2410','#f6d58a'] },
+    noir: { color: '#08080b', opacity: 1, image: null, style: 'noir', accents: ['#d6b25e','#f8f1d2'] },
+    runes: { color: '#102a2e', opacity: 1, image: null, style: 'runes', accents: ['#9fffe1','#77a8ff'] },
   };
   const conf = map[theme];
   side.background.color = conf.color;
+  side.background.style = conf.style || 'plain';
   if (!side.elements.length) {
     side.elements.push({ ...baseElement('frame'), color:'transparent', borderColor: conf.accents[0], borderWidth: 10, width: getCurrentCard().width-40, height:getCurrentCard().height-40, x:20, y:20, radius: 24, name: 'Cadre thème' });
-    side.elements.push({ ...baseElement('text'), text: state.name, x: 36, y: 28, width: getCurrentCard().width-72, height: 52, fontSize: 32, fontFamily: theme === 'classic' ? 'Cinzel' : theme === 'neon' ? 'Orbitron' : 'Inter', color: conf.accents[0], textAlign:'center', name:'Titre thème' });
+    side.elements.push({ ...baseElement('text'), text: state.name, x: 36, y: 28, width: getCurrentCard().width-72, height: 52, fontSize: 32, fontFamily: theme === 'classic' || theme === 'parchment' ? 'Cinzel' : theme === 'neon' ? 'Orbitron' : theme === 'noir' ? 'Playfair Display' : 'Inter', color: conf.accents[0], textAlign:'center', name:'Titre thème' });
+    if (['parchment','noir','runes'].includes(theme)) {
+      side.elements.push({ ...baseElement('badge'), x: Math.round(getCurrentCard().width/2 - 45), y: getCurrentCard().height - 120, width: 90, height: 90, color: conf.accents[1], opacity: .75, name: 'Symbole décoratif' });
+    }
   }
   touch();
 }
