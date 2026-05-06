@@ -2,20 +2,51 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Sound Modules</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bande Son - Ludicore Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="sound.css">
 </head>
 <body>
+  <div class="app-shell">
+    <header class="sound-hero">
+      <div>
+        <span class="eyebrow">Ludicore Studio</span>
+        <h1>Gestionnaire de bande son</h1>
+        <p>Classe tes musiques, ambiances et effets sonores par module. Les liens reconnus affichent automatiquement la plateforme.</p>
+      </div>
+      <div class="hero-stats" aria-label="Statistiques">
+        <span><strong id="moduleCount">0</strong> modules</span>
+        <span><strong id="linkCount">0</strong> liens</span>
+        <a class="back-link" href="index.html">← Accueil</a>
+      </div>
+    </header>
 
-<h1>Gestionnaire de modules audio</h1>
+    <section class="action-bar" aria-label="Actions principales">
+      <button type="button" onclick="addModule()">+ Ajouter un module</button>
+      <button type="button" class="secondary" onclick="exportJSON()">Exporter JSON</button>
+      <label class="import-pill">
+        Importer JSON
+        <input type="file" accept="application/json,.json" onchange="importJSON(event)">
+      </label>
+      <button type="button" class="secondary" onclick="exportPDF()">Exporter PDF</button>
+    </section>
 
-<div id="modules"></div>
+    <main id="modules" class="modules-grid"></main>
+  </div>
 
-<button onclick="addModule()">+ Ajouter un module</button>
-<button onclick="exportJSON()">Exporter JSON</button>
-<button onclick="exportPDF()">Exporter PDF</button>
+  <template id="emptyTemplate">
+    <section class="empty-state">
+      <div class="empty-icon">♫</div>
+      <h2>Aucun module audio</h2>
+      <p>Ajoute un module pour commencer : combat, exploration, menu, victoire, boss final…</p>
+      <button type="button" onclick="addModule()">Créer le premier module</button>
+    </section>
+  </template>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="sound.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="sound.js"></script>
 </body>
 </html>
