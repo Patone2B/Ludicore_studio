@@ -82,12 +82,8 @@ Cela est normal pour un projet open source indépendant.
 ---
 
 ### 🎮 Téléchargement (Itch.io)
-👉 https://tonlien.itch.io/ludicore-studio
+👉 https://patone2a.itch.io/ludicore-studio
 
----
-
-### 💻 Code source (open source)
-👉 https://github.com/tonpseudo/ludicore-studio
 
 ---
 
