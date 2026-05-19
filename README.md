@@ -30,13 +30,6 @@ Créez et structurez facilement les règles de votre jeu avec une interface clai
 
 ---
 
-### 🎨 Gestion des éléments
-![éléments](https://exemple.com/image-elements.png)
-
-Ajoutez et organisez vos composants (cartes, tuiles, etc.).
-
----
-
 ### 📄 Export PDF
 ![pdf](https://exemple.com/image-pdf.png)
 
