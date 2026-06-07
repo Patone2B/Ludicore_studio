@@ -1,0 +1,37 @@
+Améliorations apportées à carte.js
+
+1. Protection anti-écran blanc
+- Ajout d'un filet de sécurité JavaScript avec window.addEventListener('error') et window.addEventListener('unhandledrejection').
+- En cas d'erreur, le module essaie de créer une sauvegarde de secours dans localStorage sous la clé deckStudioEmergencyBackup.
+- Un message s'affiche dans le statut de sauvegarde au lieu de laisser l'utilisateur sans explication.
+
+2. Historique undo/redo beaucoup plus léger
+- L'historique est limité à 20 états au lieu de 80.
+- Une limite globale de mémoire est ajoutée pour l'historique.
+- Objectif : éviter que chaque déplacement ou duplication conserve trop de copies complètes du deck.
+
+3. Déplacement et redimensionnement plus fluides
+- Pendant un glisser-déposer, le script ne reconstruit plus tout le canvas.
+- Il met seulement à jour la position/taille de l'élément déplacé.
+- Le panneau de sélection est rafraîchi moins souvent pendant le déplacement.
+
+4. Rendu général différé
+- Les rendus complets sont regroupés avec requestAnimationFrame.
+- Cela évite plusieurs renderAll() successifs dans la même fraction de seconde.
+
+5. Images automatiquement allégées
+- Les images importées sont redimensionnées à 1600 px maximum sur leur plus grand côté.
+- Elles sont compressées en JPEG qualité 0.82.
+- Objectif : éviter les énormes chaînes base64 dans le deck.
+- Attention : cette méthode supprime la transparence des PNG. 
+
+6. Duplication sécurisée
+- La duplication de carte, d'élément ou de deck est bloquée si le deck devient trop lourd.
+- Le seuil actuel est fixé à environ 25 Mo.
+- Le but est d'éviter de recopier des images base64 jusqu'à faire planter le navigateur ou le logiciel.
+
+7. Sauvegarde plus prudente
+- Le script avertit si le deck devient très lourd.
+- L'auto-sauvegarde reste active, mais elle évite de se déclencher trop vite grâce au délai déjà présent.
+
+
