@@ -5,6 +5,16 @@ const DB_VERSION = 1;
 const STORE_DECKS = 'decks';
 const META_MIGRATED_KEY = 'deckStudioMigratedToIndexedDB';
 const GRID_SIZE = 10;
+
+// Optimisations anti-écran blanc / anti-surcharge mémoire
+const MAX_HISTORY = 20;
+const MAX_HISTORY_TOTAL_BYTES = 35 * 1024 * 1024;
+const MAX_DECK_WARNING_BYTES = 25 * 1024 * 1024;
+const MAX_IMAGE_EDGE = 1600;
+const IMAGE_EXPORT_TYPE = 'image/jpeg';
+const IMAGE_EXPORT_QUALITY = 0.82;
+const DRAG_PANEL_REFRESH_MS = 80;
+
 let state = createEmptyState();
 let selectedElementId = null;
 let history = [];
@@ -17,7 +27,10 @@ const AUTO_SAVE_DELAY = 1800;
 
 const els = {};
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  installRuntimeGuards();
+  init();
+});
 
 async function init() {
   bindElements();
@@ -143,6 +156,62 @@ function showScreen(name) {
   if (name === 'start') renderSavedDecks();
 }
 function toggleModal(show) { els.aboutModal.classList.toggle('hidden', !show); }
+
+function installRuntimeGuards() {
+  window.addEventListener('error', event => {
+    console.error('Erreur JavaScript interceptée :', event.error || event.message);
+    safeSaveEmergency();
+    showSoftError("Une erreur a été interceptée. Le module reste ouvert si le navigateur n'a pas manqué de mémoire.");
+  });
+  window.addEventListener('unhandledrejection', event => {
+    console.error('Promesse rejetée interceptée :', event.reason);
+    safeSaveEmergency();
+    showSoftError("Une opération a échoué. Tu peux exporter le deck en JSON par sécurité.");
+  });
+}
+
+function showSoftError(message) {
+  if (!els.saveStatus) return;
+  els.saveStatus.textContent = message;
+  els.saveStatus.classList.add('is-error');
+  els.saveStatus.classList.remove('is-saved');
+}
+
+function safeSaveEmergency() {
+  try {
+    if (state?.persistLocal !== false) localStorage.setItem('deckStudioEmergencyBackup', JSON.stringify(state));
+  } catch (error) {
+    console.warn('Sauvegarde de secours impossible :', error);
+  }
+}
+
+function estimateDeckBytes(deck = state) {
+  try { return new Blob([JSON.stringify(deck)]).size; }
+  catch { return Infinity; }
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes)) return 'taille inconnue';
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
+}
+
+function isDeckTooHeavyFor(actionName = 'cette action') {
+  const bytes = estimateDeckBytes();
+  if (bytes < MAX_DECK_WARNING_BYTES) return false;
+  showSoftError(`Deck lourd : ${formatBytes(bytes)}. Action bloquée pour éviter un écran blanc.`);
+  alert(`Le deck est très lourd (${formatBytes(bytes)}). ${actionName} est bloquée pour éviter un écran blanc. Réduis les images ou exporte le JSON avant de continuer.`);
+  return true;
+}
+
+function scheduleRenderAll() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    renderAll();
+  });
+}
 
 function enterEditor() {
   if (!state.currentCardId) state.currentCardId = state.cards[0].id;
@@ -343,6 +412,7 @@ function addCard() {
 }
 
 function duplicateCurrentCard() {
+  if (isDeckTooHeavyFor('La duplication de carte')) return;
   const current = structuredClone(getCurrentCard());
   current.id = uid();
   current.name = current.name + ' copie';
@@ -398,10 +468,11 @@ function labelForType(type) {
   return ({ text:'Texte', image:'Image', rect:'Rectangle', circle:'Cercle', triangle:'Triangle', line:'Ligne', badge:'Badge', frame:'Cadre' })[type] || type;
 }
 
-function onLocalImageAdd(e) {
+async function onLocalImageAdd(e) {
   const file = e.target.files?.[0];
   if (!file) return;
-  fileToDataURL(file).then(src => {
+  try {
+    const src = await fileToDataURL(file);
     const element = baseElement('image');
     element.src = src;
     element.name = file.name;
@@ -409,26 +480,56 @@ function onLocalImageAdd(e) {
     selectedElementId = element.id;
     normalizeZIndices();
     touch();
+  } catch (error) {
+    console.error(error);
+    alert('Image impossible à importer. Essaie avec une image plus légère.');
+  } finally {
     e.target.value = '';
-  });
+  }
 }
 
-function onBackgroundImageAdd(e) {
+async function onBackgroundImageAdd(e) {
   const file = e.target.files?.[0];
   if (!file) return;
-  fileToDataURL(file).then(src => {
+  try {
+    const src = await fileToDataURL(file);
     getCurrentSide().background.image = src;
     touch();
+  } catch (error) {
+    console.error(error);
+    alert('Image de fond impossible à importer. Essaie avec une image plus légère.');
+  } finally {
     e.target.value = '';
-  });
+  }
 }
 function clearBackgroundImage() { getCurrentSide().background.image = null; touch(); }
 
 function fileToDataURL(file) {
+  return compressImageFile(file, MAX_IMAGE_EDGE, IMAGE_EXPORT_QUALITY);
+}
+
+function compressImageFile(file, maxEdge = 1600, quality = 0.82) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
+    reader.onerror = () => reject(reader.error || new Error('Lecture image impossible'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Image invalide'));
+      img.onload = () => {
+        const ratio = Math.min(1, maxEdge / Math.max(img.width, img.height));
+        const width = Math.max(1, Math.round(img.width * ratio));
+        const height = Math.max(1, Math.round(img.height * ratio));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { alpha: false });
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL(IMAGE_EXPORT_TYPE, quality));
+      };
+      img.src = reader.result;
+    };
     reader.readAsDataURL(file);
   });
 }
@@ -465,6 +566,26 @@ function onResizePointerDown(e) {
   window.addEventListener('pointerup', onPointerUp, { once: true });
 }
 
+function updateElementNode(el) {
+  const node = els.cardCanvas.querySelector(`[data-id="${el.id}"]`);
+  if (!node) return;
+  node.style.left = `${el.x}px`;
+  node.style.top = `${el.y}px`;
+  node.style.width = `${el.width}px`;
+  node.style.height = `${el.height}px`;
+  node.style.transform = `rotate(${el.rotation || 0}deg)`;
+  node.style.opacity = el.opacity ?? 1;
+  if (el.type === 'line') node.style.borderTop = `${Math.max(el.height, 2)}px solid ${el.color || '#60a5fa'}`;
+}
+
+let lastDragPanelRefresh = 0;
+function throttledSelectionPanelRender() {
+  const now = performance.now();
+  if (now - lastDragPanelRefresh < DRAG_PANEL_REFRESH_MS) return;
+  lastDragPanelRefresh = now;
+  renderSelectionPanel();
+}
+
 function onPointerMove(e) {
   if (!dragState) return;
   const el = getCurrentElements().find(item => item.id === dragState.id);
@@ -483,13 +604,15 @@ function onPointerMove(e) {
     el.height = Math.max(20, h);
     if (el.type === 'circle') el.radius = 999;
   }
-  renderCanvas();
-  renderSelectionPanel();
+  updateElementNode(el);
+  throttledSelectionPanelRender();
 }
 
 function onPointerUp() {
   window.removeEventListener('pointermove', onPointerMove);
   dragState = null;
+  renderSelectionPanel();
+  renderLayers();
   markDirty();
   autoSave();
   pushHistory();
@@ -573,6 +696,7 @@ function normalizeZIndices() {
 }
 
 function duplicateSelectedElement() {
+  if (isDeckTooHeavyFor('La duplication d’élément')) return;
   const el = getSelectedElement();
   if (!el) return;
   const copy = structuredClone(el);
@@ -611,13 +735,14 @@ function handleKeyDown(e) {
     if (e.key === 'ArrowRight') { el.x = clamp(el.x + (e.shiftKey ? 10 : 1), 0, getCurrentCard().width - el.width); moved = true; }
     if (e.key === 'ArrowUp') { el.y = clamp(el.y - (e.shiftKey ? 10 : 1), 0, getCurrentCard().height - el.height); moved = true; }
     if (e.key === 'ArrowDown') { el.y = clamp(el.y + (e.shiftKey ? 10 : 1), 0, getCurrentCard().height - el.height); moved = true; }
-    if (moved) { e.preventDefault(); markDirty(); renderAll(); autoSave(); }
+    if (moved) { e.preventDefault(); updateElementNode(el); renderSelectionPanel(); markDirty(); autoSave(); pushHistory(); }
   }
 }
 
-function touch(push = true) {
+function touch(push = true, immediate = false) {
   markDirty();
-  renderAll();
+  if (immediate) renderAll();
+  else scheduleRenderAll();
   autoSave();
   if (push) pushHistory();
 }
@@ -628,6 +753,11 @@ function markDirty(saved = false, message) {
   els.saveStatus.classList.remove('is-error');
 }
 async function saveCurrentDeck({ notify = false } = {}) {
+  const bytes = estimateDeckBytes();
+  if (bytes >= MAX_DECK_WARNING_BYTES && notify) {
+    els.saveStatus.textContent = `Deck lourd : ${formatBytes(bytes)}`;
+    els.saveStatus.classList.add('is-error');
+  }
   state.updatedAt = new Date().toISOString();
   const clone = structuredClone(state);
   try {
@@ -720,6 +850,10 @@ function loadDeck(deck, silent = false) {
 async function duplicateDeck(id) {
   const source = await getDeckById(id);
   if (!source) return;
+  if (estimateDeckBytes(source) >= MAX_DECK_WARNING_BYTES) {
+    alert(`Ce deck pèse ${formatBytes(estimateDeckBytes(source))}. Duplication bloquée pour éviter un plantage.`);
+    return;
+  }
   const copy = structuredClone(source);
   copy.id = uid();
   copy.name = (copy.name || 'Deck') + ' copie';
@@ -898,16 +1032,26 @@ function applyTheme(theme) {
 }
 
 function pushHistory(reset = false) {
-  const snapshot = JSON.stringify(state);
+  let snapshot;
+  try {
+    snapshot = JSON.stringify(state);
+  } catch (error) {
+    console.warn('Historique impossible :', error);
+    return;
+  }
   if (reset) {
-    history = [snapshot]; historyIndex = 0; return;
+    history = [snapshot];
+    historyIndex = 0;
+    return;
   }
   if (history[historyIndex] === snapshot) return;
   history = history.slice(0, historyIndex + 1);
   history.push(snapshot);
-  if (history.length > 80) history.shift();
+  while (history.length > MAX_HISTORY) history.shift();
+  while (history.length > 1 && history.reduce((sum, item) => sum + item.length, 0) > MAX_HISTORY_TOTAL_BYTES) history.shift();
   historyIndex = history.length - 1;
 }
+
 function undo() {
   if (historyIndex <= 0) return;
   historyIndex -= 1;
